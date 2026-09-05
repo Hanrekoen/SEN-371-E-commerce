@@ -135,7 +135,7 @@ See `ARCHITECTURE.md` for the layering rules and the design patterns in use.
 
 | Member | Responsibility |
 |---|---|
-| Person 1 | Architecture, database, products and orders |
-| Person 2 | Authentication and security |
-| Person 3 | Frontend architecture, cart |
-| Person 4 | UI/UX, error handling, categories, QA and release |
+| Hanre Koen | Architecture, database, products and orders |
+| Ryno Lourens | Authentication and security |
+| Zander Jacques Burger | Frontend architecture, cart |
+| Obusitse Tlotlo Kodisang Bokaba  | UI/UX, error handling, categories, QA and release |
