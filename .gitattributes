@@ -1,0 +1,14 @@
+# Everyone on this project is on Windows, but the repo stores LF.
+# Without this, whoever commits from a different tool re-writes whole files
+# with only line-ending changes, which buries the real diff in a pull request.
+* text=auto eol=lf
+
+# Binary - never touch these
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.ico binary
+*.woff binary
+*.woff2 binary

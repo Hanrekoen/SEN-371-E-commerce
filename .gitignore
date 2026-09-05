@@ -1,0 +1,42 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# environment — NEVER commit real secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# build output
+dist/
+build/
+client/dist/
+*.tsbuildinfo
+
+# testing
+coverage/
+.nyc_output/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# misc
+.cache/
+tmp/
+
+# local-only: superseded duplicates kept for reference, not part of the build
+_superseded/
