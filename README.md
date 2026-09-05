@@ -68,7 +68,6 @@ All seeded users share the password `Password123!`.
 | Email | Role |
 |---|---|
 | `Hanre.admin@sen371.test` | admin |
-| `Obusitse.admin@sen371.test` | admin |
 
 The seed also creates customer accounts, one populated cart and one paid order.
 
