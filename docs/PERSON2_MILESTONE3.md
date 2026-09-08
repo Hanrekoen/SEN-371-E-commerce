@@ -1,6 +1,6 @@
 # Person 2 — API & Security: Milestone 3
 
-API integration, validation infrastructure, security review
+Hanre Koen · API integration, validation infrastructure, security review
 
 Milestone 3's stated headline gap was that **nothing in the codebase called
 out to another service** on a milestone titled API Integration. That is now

@@ -1,4 +1,14 @@
 "use strict";
+
+// config/env.js throws when these are missing, by design - a misconfigured
+// server should fail at startup, not at the first request. This file reaches
+// it through services/payment/index.js, so it supplies throwaway values
+// before the first require rather than relying on a real .env.
+process.env.NODE_ENV = "test";
+process.env.MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/sen371-test";
+process.env.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || "test-access-secret-not-a-real-key";
+process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "test-refresh-secret-not-a-real-key";
+
 const PaymentProvider = require("../../src/services/payment/PaymentProvider");
 const StubPaymentProvider = require("../../src/services/payment/StubPaymentProvider");
 const MockPaymentProvider = require("../../src/services/payment/MockPaymentProvider");

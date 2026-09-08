@@ -132,9 +132,45 @@ See `ARCHITECTURE.md` for the layering rules and the design patterns in use.
 
 ## Team
 
+Roles rotate between milestones. The table below is the standing split from
+Milestones 1-2; see the Milestone 3 section beneath it for the current one.
+
 | Member | Responsibility |
 |---|---|
 | Hanre Koen | Architecture, database, products and orders |
 | Ryno Lourens | Authentication and security |
 | Zander Jacques Burger | Frontend architecture, cart |
 | Obusitse Tlotlo Kodisang Bokaba  | UI/UX, error handling, categories, QA and release |
+
+### Milestone 3 roles
+
+Milestone 3 is *Code Review: API Integration*. Roles were reassigned for it,
+so the work in this milestone does not follow the table above. Each person
+owns the resource named below, and does the validation and response DTOs for
+that resource; the standalone pieces have a single owner each.
+
+| Member | Milestone 3 role | Owns | Standalone piece |
+|---|---|---|---|
+| Obusitse Tlotlo Kodisang Bokaba | Person 1 — Backend & Data | products, orders | Wires the payment call into checkout |
+| **Hanre Koen** | Person 2 — API & Security | auth, security | Payment gateway integration; security middleware; OWASP review |
+| Ryno Lourens | Person 3 — Frontend Architecture | cart | Reviews the API contract as its consumer; starts the React API client |
+| Zander Jacques Burger | Person 4 — UI/UX, QA & Release | categories | Swagger / OpenAPI documentation; deployment configuration |
+
+**Files with a single owner this milestone**, so no two people edit the same
+file:
+
+| File | Only editor |
+|---|---|
+| `server/src/app.js` | Person 2 — security middleware |
+| `server/src/middleware/validate.js` | Person 2 — created it, nobody else edits |
+| `server/src/middleware/sanitize.js`, `rateLimit.js` | Person 2 |
+| `server/src/services/payment/`, `payment-gateway/` | Person 2 |
+| `server/src/routes/index.js` | Person 1 |
+| `server/src/errors/AppError.js` | Person 4 |
+| `docs/openapi.yaml` | Person 4 — everyone else sends their endpoint details rather than editing |
+
+Milestone 3 documentation: [`docs/SECURITY.md`](docs/SECURITY.md) (OWASP Top
+Ten review), [`docs/CHECKOUT_INTEGRATION.md`](docs/CHECKOUT_INTEGRATION.md)
+(handover from Person 2 to Person 1),
+[`docs/PERSON2_MILESTONE3.md`](docs/PERSON2_MILESTONE3.md),
+[`payment-gateway/README.md`](payment-gateway/README.md).
