@@ -12,7 +12,10 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testTimeout": 20000
+    "testTimeout": 20000,
+    "setupFiles": [
+      "<rootDir>/tests/setup.js"
+    ]
   },
   "license": "UNLICENSED",
   "directories": {
