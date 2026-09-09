@@ -1,12 +1,12 @@
 "use strict";
 
 function toProductDTO(product, { isAdmin = false } = {}) {
-    const P = typeof product.toObject === "function" ? product.toObject() : product;
+    const p = typeof product.toObject === "function" ? product.toObject() : product;
     
     const category =
-    p.catgoryID &&  typeof p.category === "object" && p.category.name
-        ? { id: String(p.categoryID._id), name: p.category.name, slug: p.categoryID.slug }
-        : { id: String(p.categoryID), name: null, slug: null };
+    p.catgoryID &&  typeof p.categoryId === "object" && p.category.name
+        ? { id: String(p.categoryId._id), name: p.category.name, slug: p.categoryID.slug }
+        : { id: String(p.categoryId), name: null, slug: null };
 
     const dto = {
         id: String(p._id),
@@ -15,8 +15,7 @@ function toProductDTO(product, { isAdmin = false } = {}) {
         sku: p.sku,
         brand: p.brand,
         description: p.description,
-        priceCents: p.priceCents, category,
-        stock: p.stock,   
+        priceCents: p.priceCents, category,   
         images: p.images,
         variants: p.variants,
         specs: p.specs,

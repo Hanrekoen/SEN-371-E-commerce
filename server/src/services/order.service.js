@@ -10,6 +10,7 @@ const {
   NotFoundError,
   ForbiddenError,
   BusinessRuleError,
+  AppError,
 } = require("../errors/AppError");
 
 /**
@@ -34,7 +35,7 @@ const TRANSITIONS = {
  *   5. build the order with the factory and save it
  *   6. empty the cart
  */
-async function checkout(userId, shippingAddress) {
+async function checkout(userId, {shippingAddress, card} = {}) {
   const cart = await cartRepository.findByUser(userId);
   if (!cart || cart.items.length === 0) {
     throw new BusinessRuleError("Your cart is empty");
@@ -76,7 +77,7 @@ async function checkout(userId, shippingAddress) {
     const authResult = await paymentProvider.authorize({
       amountCents: orderData.totalCents,
       currency: env.payment.currency,
-      description: orderData.orderNumber,
+      orderNumber: orderData.orderNumber,
       card,
     });
 
@@ -85,11 +86,11 @@ async function checkout(userId, shippingAddress) {
     }
 
     orderData.status = "paid";
-    orderData.paymentReference = authResult.ProviderReference;
+    orderData.paymentReference = authResult.providerReference;
 
     const order = await orderRepository.create(orderData);
     await cartRepository.clear(userId);
-    return order;
+    return toOrderDTO(order);
   } catch (err) {
     for (const item of decremented) {
       await productRepository.incrementStock(item.productId, item.quantity);
@@ -141,7 +142,7 @@ async function updateStatus(orderId, nextStatus) {
   }
   
   const updated = await orderRepository.setStatus(orderId, nextStatus);
-  return orderRepository.setStatus(orderId, nextStatus);
+  return toOrderDTO(updated);
 }
 
 module.exports = {

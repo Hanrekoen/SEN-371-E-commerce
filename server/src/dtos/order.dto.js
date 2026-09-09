@@ -14,7 +14,7 @@ function toOrderDTO(order) {
             quantity: item.quantity,
             unitPriceCents: item.unitPriceCents,
         })),
-        subtotalCents: O.totalCents,
+        subtotalCents: O.subtotalCents,
         shippingCents: O.shippingCents,
         taxCents: O.taxCents,
         totalCents: O.totalCents,
@@ -29,3 +29,5 @@ function toOrderDTO(order) {
 function toOrderListDTO(orders) {
     return orders.map((toOrderDTO));
 }
+
+module.exports = { toOrderDTO, toOrderListDTO }

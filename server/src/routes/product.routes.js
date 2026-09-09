@@ -21,12 +21,12 @@ const listQueryRules = [
 
 const productWriteRules = [
     body("name").trim().isLength({min: 2, max:120 }).withMessage("Name must be between 2 and 120 characters"),
-    body("slug").matches(/^[a-z0-9]+([-[a-z0-9]+)*$/).withMessage("Slug must be lowercase letters, numbers, and hyphens only"),
-    body("sku").matches(/^[A-Z0-9]+$/).withMessage("SKU must be uppercase letters and numbers only"),
+    body("slug").matches(/^[a-z0-9]+(-[a-z0-9]+)*$/).withMessage("Slug must be lowercase letters, numbers, and hyphens only"),
+    body("sku").matches(/^[A-Z0-9]+$/).withMessage("SKU must be uppercase letters, hyphens and numbers only"),
     body("brand").trim().notEmpty().withMessage("Brand must be filled in"),
     body("description").trim().notEmpty().withMessage("Description is required"),
     body("priceCents").isInt({ min: 0 }).withMessage("Price must be a non-negative integer"),
-    body("categoryID").isMongoId().withMessage("Category ID must be a valid MongoDB ObjectId"),
+    body("categoryId").isMongoId().withMessage("Category ID must be a valid MongoDB ObjectId"),
     body("stockQty").isInt({ min: 0 }).toInt().withMessage("Stock quantity must be a non-negative integer"),
     body("images").isArray({ min: 1 }).withMessage("Images must be an array of URLs"),
     body("images.*").isURL().withMessage("Each image must be a valid URL"),
@@ -40,8 +40,8 @@ router.get("/brands", asyncHandler(controller.listBrands));
 router.get("/:slug", asyncHandler(controller.getBySlug));
 
 // Admin only
-router.post("/",       authenticate, requireRole("admin"), asyncHandler(controller.create));
-router.put("/:id",     authenticate, requireRole("admin"), asyncHandler(controller.update));
+router.post("/",       authenticate, requireRole("admin"),productWriteRules, validate, asyncHandler(controller.create));
+router.put("/:id",     authenticate, requireRole("admin"),productWriteRules, validate, asyncHandler(controller.update));
 router.delete("/:id",  authenticate, requireRole("admin"), asyncHandler(controller.deactivate));
 
 module.exports = router;

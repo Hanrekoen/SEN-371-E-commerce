@@ -50,4 +50,4 @@ async function deactivate(req, res) {
   return noContent(res);
 }
 
-module.exports = { list, getBySlug, listBrands, create, update, deactivate, isAdminRequest };
+module.exports = { list, getBySlug, listBrands, create, update, deactivate, isAdmin };
