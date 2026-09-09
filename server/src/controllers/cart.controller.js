@@ -1,5 +1,6 @@
 "use strict";
 const cartService = require("../services/cart.service");
+const { toCartDto } = require("../dtos/cart.dto");
 const { ok, created } = require("../utils/response");
 
 // The cart always belongs to the authenticated user. userId is read from the
@@ -7,7 +8,7 @@ const { ok, created } = require("../utils/response");
 // signed-in user read or edit anyone else's cart.
 
 async function getCart(req, res) {
-  return ok(res, await cartService.getCart(req.user.id));
+  return ok(res, toCartDto(await cartService.getCart(req.user.id)));
 }
 
 async function addItem(req, res) {
@@ -17,7 +18,7 @@ async function addItem(req, res) {
     quantity: Number(quantity),
     finish,
   });
-  return created(res, cart);
+  return created(res, toCartDto(cart));
 }
 
 async function updateQuantity(req, res) {
@@ -26,15 +27,15 @@ async function updateQuantity(req, res) {
     req.params.productId,
     Number(req.body.quantity)
   );
-  return ok(res, cart);
+  return ok(res, toCartDto(cart));
 }
 
 async function removeItem(req, res) {
-  return ok(res, await cartService.removeItem(req.user.id, req.params.productId));
+  return ok(res, toCartDto(await cartService.removeItem(req.user.id, req.params.productId)));
 }
 
 async function clear(req, res) {
-  return ok(res, await cartService.clear(req.user.id));
+  return ok(res, toCartDto(await cartService.clear(req.user.id)));
 }
 
 module.exports = { getCart, addItem, updateQuantity, removeItem, clear };
