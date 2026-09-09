@@ -4,8 +4,8 @@ function toProductDTO(product, { isAdmin = false } = {}) {
     const p = typeof product.toObject === "function" ? product.toObject() : product;
     
     const category =
-    p.catgoryID &&  typeof p.categoryId === "object" && p.category.name
-        ? { id: String(p.categoryId._id), name: p.category.name, slug: p.categoryID.slug }
+    p.categoryId &&  typeof p.categoryId === "object" && p.category.name
+        ? { id: String(p.categoryId._id), name: p.category.name, slug: p.categoryId.slug }
         : { id: String(p.categoryId), name: null, slug: null };
 
     const dto = {
@@ -19,8 +19,8 @@ function toProductDTO(product, { isAdmin = false } = {}) {
         images: p.images,
         variants: p.variants,
         specs: p.specs,
-        ratingsAverage: p.ratingsAverage,
-        ratingsCount: p.ratingsCount,
+        ratingAverage: p.ratingsAverage,
+        ratingCount: p.ratingsCount,
         inStock: p.stockQty > 0,
         isActive: p.isActive,
         createdAt: p.createdAt,

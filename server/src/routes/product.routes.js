@@ -22,7 +22,7 @@ const listQueryRules = [
 const productWriteRules = [
     body("name").trim().isLength({min: 2, max:120 }).withMessage("Name must be between 2 and 120 characters"),
     body("slug").matches(/^[a-z0-9]+(-[a-z0-9]+)*$/).withMessage("Slug must be lowercase letters, numbers, and hyphens only"),
-    body("sku").matches(/^[A-Z0-9]+$/).withMessage("SKU must be uppercase letters, hyphens and numbers only"),
+    body("sku").matches(/^[A-Z0-9-]+$/).withMessage("SKU must be uppercase letters, hyphens and numbers only"),
     body("brand").trim().notEmpty().withMessage("Brand must be filled in"),
     body("description").trim().notEmpty().withMessage("Description is required"),
     body("priceCents").isInt({ min: 0 }).withMessage("Price must be a non-negative integer"),
