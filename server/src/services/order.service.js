@@ -3,6 +3,9 @@ const orderRepository = require("../repositories/order.repository");
 const cartRepository = require("../repositories/cart.repository");
 const productRepository = require("../repositories/product.repository");
 const orderFactory = require("./order.factory");
+const { paymentProvider } = require("./payment");
+const env = require("../config/env");
+const { toOrderDTO, toOrderListDTO } = require("../dtos/order.dto");
 const {
   NotFoundError,
   ForbiddenError,
@@ -70,6 +73,20 @@ async function checkout(userId, shippingAddress) {
       shippingAddress,
     });
 
+    const authResult = await paymentProvider.authorize({
+      amountCents: orderData.totalCents,
+      currency: env.payment.currency,
+      description: orderData.orderNumber,
+      card,
+    });
+
+    if (!authResult.approved) {
+      throw new AppError(authResult.message || "Payment declined", 402, "PAYMENT_DECLINED", {code: authResult.code});
+    }
+
+    orderData.status = "paid";
+    orderData.paymentReference = authResult.ProviderReference;
+
     const order = await orderRepository.create(orderData);
     await cartRepository.clear(userId);
     return order;
@@ -82,7 +99,8 @@ async function checkout(userId, shippingAddress) {
 }
 
 async function listForUser(userId, { page, limit } = {}) {
-  return orderRepository.findByUser(userId, { page, limit });
+  const result = await orderRepository.findByUser(userId, { page, limit });
+  return { ...result, items: toOrderListDTO(result.items) };
 }
 
 /**
@@ -96,11 +114,12 @@ async function getForUser(orderId, userId) {
   if (String(order.userId) !== String(userId)) {
     throw new ForbiddenError("That order does not belong to you");
   }
-  return order;
+  return toOrderDTO(order);
 }
 
 async function listAll({ status, page, limit } = {}) {
-  return orderRepository.findAll({ status, page, limit });
+  const result = await orderRepository.findAll({ status, page, limit });
+  return { ...result, items: toOrderListDTO(result.items) };
 }
 
 async function updateStatus(orderId, nextStatus) {
@@ -120,7 +139,8 @@ async function updateStatus(orderId, nextStatus) {
       await productRepository.incrementStock(item.productId, item.quantity);
     }
   }
-
+  
+  const updated = await orderRepository.setStatus(orderId, nextStatus);
   return orderRepository.setStatus(orderId, nextStatus);
 }
 

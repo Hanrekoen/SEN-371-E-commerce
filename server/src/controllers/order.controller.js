@@ -5,7 +5,7 @@ const { ok, created, paginated } = require("../utils/response");
 // req.user is attached by Person 2's authenticate middleware.
 
 async function checkout(req, res) {
-  const order = await orderService.checkout(req.user.id, req.body.shippingAddress);
+  const order = await orderService.checkout(req.user.id, { shippingAddress: req.body.shippingAddress, card: req.body.card });
   return created(res, order);
 }
 
