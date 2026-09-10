@@ -1,7 +1,9 @@
 "use strict";
 const mongoose = require("mongoose");
 
-const ORDER_STATUSES = ["pending", "paid", "shipped", "delivered", "cancelled"];
+// An order only exists once payment has been authorised, so "paid" is the
+// first state - there is no pending order sitting around unpaid.
+const ORDER_STATUSES = ["paid", "shipped", "delivered", "cancelled"];
 
 // Order items COPY the name and price at purchase time. An order is a
 // financial record: renaming or repricing a product later must not rewrite it.
@@ -39,7 +41,9 @@ const orderSchema = new mongoose.Schema(
     taxCents:      { type: Number, required: true, min: 0 },
     totalCents:    { type: Number, required: true, min: 0 },
 
-    status:          { type: String, enum: ORDER_STATUSES, default: "pending" },
+    // Required with no default: a status must be set deliberately, so no code
+    // path can persist an order whose state nobody decided.
+    status:          { type: String, enum: ORDER_STATUSES, required: true },
     shippingAddress: { type: shippingAddressSchema, required: true },
     paymentReference:{ type: String },
   },

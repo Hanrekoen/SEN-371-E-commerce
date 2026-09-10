@@ -4,6 +4,7 @@ import Button from "../components/ui/Button";
 import Field from "../components/ui/Field";
 import Alert from "../components/ui/Alert";
 import { ShieldIcon, TruckIcon, LockIcon, CardIcon } from "../components/ui/Icons";
+import SecurePayOverlay from "../components/checkout/SecurePayOverlay";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { checkout } from "../api/orders.api";
@@ -41,7 +42,8 @@ export default function CheckoutPage() {
   }));
   const [errors, setErrors] = useState({});
   const [summary, setSummary] = useState(null);
-  const [busy, setBusy] = useState(false);
+  // The overlay is the busy state: while it is open a payment is in flight.
+  const [paying, setPaying] = useState(false);
 
   const set = (key, transform) => (e) => {
     const next = transform ? transform(e.target.value) : e.target.value;
@@ -52,53 +54,61 @@ export default function CheckoutPage() {
   const items = cart?.items || [];
   const empty = items.length === 0;
 
-  async function onSubmit(e) {
+  // Submitting hands over to the SecurePay overlay, which is what actually
+  // runs the request. The overlay narrates the wait; this still owns what to
+  // do with the two possible outcomes.
+  function onSubmit(e) {
     e.preventDefault();
-    setBusy(true);
     setSummary(null);
     setErrors({});
+    setPaying(true);
+  }
 
+  function runPayment() {
     const [expMonth, expYear] = digitsOnly(values.expiry).match(/.{1,2}/g) || [];
+    return checkout({
+      shippingAddress: {
+        line1: values.line1,
+        city: values.city,
+        province: values.province,
+        postalCode: values.postalCode,
+        country: values.country,
+      },
+      card: {
+        number: digitsOnly(values.cardNumber),
+        expMonth: Number(expMonth),
+        // The form takes two digits; the API wants a full year.
+        expYear: expYear ? 2000 + Number(expYear) : undefined,
+        cvc: values.cvc,
+      },
+    });
+  }
 
-    try {
-      const order = await checkout({
-        shippingAddress: {
-          line1: values.line1,
-          city: values.city,
-          province: values.province,
-          postalCode: values.postalCode,
-          country: values.country,
-        },
-        card: {
-          number: digitsOnly(values.cardNumber),
-          expMonth: Number(expMonth),
-          // The form takes two digits; the API wants a full year.
-          expYear: expYear ? 2000 + Number(expYear) : undefined,
-          cvc: values.cvc,
-        },
-      });
+  function onApproved(order) {
+    setPaying(false);
+    // Checkout empties the cart server-side, so mirror that locally rather
+    // than leaving a stale badge in the navbar.
+    setCart({ items: [], itemCount: 0, subtotalCents: 0, shippingCents: 0, taxCents: 0, totalCents: 0 });
+    navigate("/order-confirmation", { replace: true, state: { order } });
+  }
 
-      // Checkout empties the cart server-side, so mirror that locally rather
-      // than leaving a stale badge in the navbar.
-      setCart({ items: [], itemCount: 0, subtotalCents: 0, shippingCents: 0, taxCents: 0, totalCents: 0 });
-      navigate("/order-confirmation", { replace: true, state: { order } });
-    } catch (err) {
-      const perField = fieldErrors(err);
-      setErrors(perField);
+  // The overlay has already explained the failure; closing it leaves the same
+  // reason on the page, with any field errors marked on the inputs.
+  function onPaymentDismissed(err) {
+    setPaying(false);
+    if (!err) return;
 
-      // The three outcomes the payment integration can produce, each said
-      // plainly rather than as a generic failure.
-      if (err.status === 402) {
-        setSummary(`${err.message} Your card was not charged and your cart is untouched — try another card.`);
-      } else if (err.status === 503) {
-        setSummary(`${err.message} Nothing has been charged. Please try again in a moment.`);
-      } else if (err.status === 422) {
-        setSummary(err.message);
-      } else if (Object.keys(perField).length === 0) {
-        setSummary(summaryMessage(err, "We could not complete your order."));
-      }
-    } finally {
-      setBusy(false);
+    const perField = fieldErrors(err);
+    setErrors(perField);
+
+    if (err.status === 402) {
+      setSummary(`${err.message} Your card was not charged and your cart is untouched — try another card.`);
+    } else if (err.status === 503) {
+      setSummary(`${err.message} Nothing has been charged. Please try again in a moment.`);
+    } else if (err.status === 422) {
+      setSummary(err.message);
+    } else if (Object.keys(perField).length === 0) {
+      setSummary(summaryMessage(err, "We could not complete your order."));
     }
   }
 
@@ -215,7 +225,7 @@ export default function CheckoutPage() {
 
           {/* The rail sits outside the <form>, so the button is associated by
               id. That keeps Enter-to-submit working from any field. */}
-          <Button type="submit" form="gv-checkout-form" size="lg" full loading={busy}>
+          <Button type="submit" form="gv-checkout-form" size="lg" full loading={paying}>
             Execute Transaction
           </Button>
         </div>
@@ -226,6 +236,25 @@ export default function CheckoutPage() {
           <p><LockIcon /> <span>Totals are calculated server-side from the live catalogue price.</span></p>
         </div>
       </aside>
+
+      <SecurePayOverlay
+        open={paying}
+        amountCents={cart?.totalCents || 0}
+        card={{ last4: digitsOnly(values.cardNumber).slice(-4), brand: cardBrand(values.cardNumber) }}
+        run={runPayment}
+        onApproved={onApproved}
+        onDismiss={onPaymentDismissed}
+      />
     </div>
   );
+}
+
+// Enough to name the scheme on the payment screen. The gateway does its own
+// check - this is only so the customer recognises the card they just entered.
+function cardBrand(value) {
+  const d = digitsOnly(value);
+  if (/^4/.test(d)) return "Visa";
+  if (/^5[1-5]/.test(d)) return "Mastercard";
+  if (/^3[47]/.test(d)) return "Amex";
+  return "";
 }

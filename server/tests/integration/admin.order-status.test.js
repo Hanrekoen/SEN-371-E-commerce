@@ -42,7 +42,7 @@ jest.mock("../../src/repositories/order.repository", () => ({
     { date: "2026-09-09", revenueCents: 100000, orders: 2 },
     { date: "2026-09-10", revenueCents: 150000, orders: 3 },
   ]),
-  countByStatus: jest.fn(async () => ({ pending: 1, paid: 4, shipped: 2, delivered: 6, cancelled: 1 })),
+  countByStatus: jest.fn(async () => ({ paid: 4, shipped: 2, delivered: 6, cancelled: 1 })),
   recentWithCustomer: jest.fn(async () => [
     { _id: mockOrderId, orderNumber: "ORD-2026-000042",
       userId: { email: "vance@soma.test" }, items: [{ name: "AeroPulse ANC Headset" }],
@@ -100,11 +100,11 @@ describe("an admin can walk an order forward", () => {
     expect(mockSetTo).toBe("delivered");
   });
 
-  test("pending -> paid", async () => {
-    mockStatus = "pending";
-    const res = await move("paid");
+  test("paid -> cancelled", async () => {
+    mockStatus = "paid";
+    const res = await move("cancelled");
     expect(res.status).toBe(200);
-    expect(mockSetTo).toBe("paid");
+    expect(mockSetTo).toBe("cancelled");
   });
 });
 
@@ -126,7 +126,7 @@ describe("steps cannot be skipped or undone", () => {
 
   test("delivered is terminal", async () => {
     mockStatus = "delivered";
-    for (const next of ["paid", "shipped", "cancelled"]) {
+    for (const next of ["shipped", "cancelled"]) {
       const res = await move(next);
       expect(res.status).toBe(422);
     }

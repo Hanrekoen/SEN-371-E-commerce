@@ -17,7 +17,6 @@ const {
  * Allowed order status transitions. Anything not listed is rejected with 422.
  */
 const TRANSITIONS = {
-  pending:   ["paid", "cancelled"],
   paid:      ["shipped", "cancelled"],
   shipped:   ["delivered"],
   delivered: [],

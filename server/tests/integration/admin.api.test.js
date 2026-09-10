@@ -59,7 +59,7 @@ jest.mock("../../src/repositories/order.repository", () => ({
     { date: "2026-09-04", revenueCents: 100000, orders: 2 },
     { date: "2026-09-05", revenueCents: 150000, orders: 3 },
   ]),
-  countByStatus: jest.fn(async () => ({ pending: 1, paid: 4, shipped: 2, delivered: 6, cancelled: 1 })),
+  countByStatus: jest.fn(async () => ({ paid: 4, shipped: 2, delivered: 6, cancelled: 1 })),
   recentWithCustomer: jest.fn(async () => [
     { _id: "6716f0a1c2d3e4f5a6b7c8f3", orderNumber: "ORD-2026-000042",
       userId: { email: "vance@soma.test" }, items: [{ name: "AeroPulse ANC Headset" }],

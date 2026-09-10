@@ -58,7 +58,8 @@ function buildOrder({ userId, cartItems, products, shippingAddress }) {
     shippingCents,
     taxCents,
     totalCents: subtotalCents + shippingCents + taxCents,
-    status: "pending",
+    // No status here on purpose. The factory prices an order; only checkout
+    // knows whether the money was taken, so only checkout sets the state.
     shippingAddress,
   };
 }

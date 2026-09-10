@@ -34,9 +34,16 @@ describe("order factory", () => {
     );
   });
 
-  test("new orders start as pending with a generated order number", () => {
+  test("a built order carries a generated order number", () => {
     const order = buildOrder({ userId: "u1", cartItems, products, shippingAddress });
-    expect(order.status).toBe("pending");
     expect(order.orderNumber).toMatch(/^ORD-\d{4}-\d{6}$/);
+  });
+
+  // The factory prices an order; only checkout knows whether the money was
+  // taken. Leaving the status unset means no path can persist an order that
+  // looks paid when it is not.
+  test("the factory does not decide the status", () => {
+    const order = buildOrder({ userId: "u1", cartItems, products, shippingAddress });
+    expect(order.status).toBeUndefined();
   });
 });
