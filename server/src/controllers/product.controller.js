@@ -1,5 +1,6 @@
 "use strict";
 const productService = require("../services/product.service");
+const validate = require("../middleware/validate");
 const { ok, created, noContent, paginated } = require("../utils/response");
 
 /**
@@ -7,6 +8,10 @@ const { ok, created, noContent, paginated } = require("../utils/response");
  * response. No database queries, no business rules, no try/catch - asyncHandler
  * in the routes file forwards rejections to the error middleware.
  */
+
+function isAdmin(req,) {
+  return Boolean(req.user && req.user.role === "admin");
+}
 
 async function list(req, res) {
   const { q, categoryId, brand, minPrice, maxPrice, sort, page = 1, limit = 12 } = req.query;
@@ -18,8 +23,9 @@ async function list(req, res) {
     maxCents: maxPrice != null ? Number(maxPrice) * 100 : undefined,
     sort,
     page: Number(page),
-    limit: Number(limit),
-  });
+    limit: Math.min(Number(limit), 100),
+  }, 
+  { isAdmin: isAdmin(req) });
   return paginated(res, result.items, result);
 }
 
@@ -32,11 +38,11 @@ async function listBrands(req, res) {
 }
 
 async function create(req, res) {
-  return created(res, await productService.create(req.body));
+  return created(res, await productService.create(validate.data(req)));
 }
 
 async function update(req, res) {
-  return ok(res, await productService.update(req.params.id, req.body));
+  return ok(res, await productService.update(req.params.id, validate.data(req)));
 }
 
 async function deactivate(req, res) {
@@ -44,4 +50,4 @@ async function deactivate(req, res) {
   return noContent(res);
 }
 
-module.exports = { list, getBySlug, listBrands, create, update, deactivate };
+module.exports = { list, getBySlug, listBrands, create, update, deactivate, isAdmin };

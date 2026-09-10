@@ -1,4 +1,8 @@
 "use strict";
+process.env.NODE_ENV = "test";
+process.env.MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/sen371-test";
+process.env.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || "test-access-secret-not-a-real-key";
+process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "test-refresh-secret-not-a-real-key";
 const { TRANSITIONS } = require("../../src/services/order.service");
 
 // FR-10: order status follows the state machine

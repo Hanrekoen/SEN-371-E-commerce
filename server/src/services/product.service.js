@@ -1,6 +1,7 @@
 "use strict";
 const productRepository = require("../repositories/product.repository");
 const { NotFoundError, ConflictError } = require("../errors/AppError");
+const { toProductDTO, toProductListDTO } = require("../dtos/product.dto");
 
 /**
  * Business rules for products.
@@ -8,48 +9,60 @@ const { NotFoundError, ConflictError } = require("../errors/AppError");
  * That is what makes this file unit-testable with a fake repository.
  */
 
-async function list(query) {
-  return productRepository.search(query);
+const WRITABLE_FIELDS = [
+    "name", "slug", "sku", "brand", "description", "priceCents",
+    "categoryID", "stockQty", "images", "variants", "specs", "isActive",
+];
+
+function pickWriteable(data) {
+  const picked = {};
+  for (const field of WRITABLE_FIELDS) {
+    if (data[field] !== undefined) picked[field] = data[field];
+  }
+  return picked;
+}
+
+async function list(query, { isAdmin = false } = {}) {
+  const result = await productRepository.search(query);
+  return {...result, items: toProductListDTO(result.items, { isAdmin }) };
 }
 
 async function getBySlug(slug) {
   const product = await productRepository.findBySlug(slug);
-  if (!product) throw new NotFoundError("Product");
-  return product;
+  if (!product) throw new NotFoundError(`Product ${slug} not found`);
+  return toProductDTO(product);
 }
 
-async function getById(id) {
-  const product = await productRepository.findById(id);
-  if (!product) throw new NotFoundError("Product");
-  return product;
+async function getById(id, { isAdmin = false } = {}) {
+  const product = await productRepository.findByIdById(id);
+  if (!product) throw new NotFoundError(`Product with id ${id} not found`);
+  return toProductDTO(product, { isAdmin });
 }
 
 async function create(data) {
-  const existing = await productRepository.findBySku(data.sku);
-  if (existing) throw new ConflictError(`SKU ${data.sku} is already in use`);
-  return productRepository.create(data);
+  const fields = pickWriteable(data);
+  const existing = await productRepository.findBySku(fields.sku);
+  if (existing) throw new ConflictError(`Product with sku ${fields.sku} already exists`);
+  const product = await productRepository.create(fields);
+  return toProductDTO(product, { isAdmin: true });
 }
 
 async function update(id, data) {
-  // SKU must stay unique across every other product.
-  if (data.sku) {
-    const clash = await productRepository.findBySku(data.sku);
+  const fields = pickWriteable(data);
+  if (fields.sku) {
+    const clash = await productRepository.findBySku(fields.sku);
     if (clash && String(clash._id) !== String(id)) {
-      throw new ConflictError(`SKU ${data.sku} is already in use`);
+      throw new ConflictError(`Product with sku ${fields.sku} already exists`);
     }
   }
-  const updated = await productRepository.updateById(id, data);
-  if (!updated) throw new NotFoundError("Product");
-  return updated;
+  const updated = await productRepository.updateById(id, fields);
+  if (!updated) throw new NotFoundError(`Product with id ${id} not found`);
+  return toProductDTO(updated, { isAdmin: true });
 }
 
-/**
- * Soft delete. The document is never removed, because historic orders
- * reference it and a hard delete would corrupt the order history.
- */
 async function deactivate(id) {
   const updated = await productRepository.updateById(id, { isActive: false });
-  if (!updated) throw new NotFoundError("Product");
+  if (!updated) throw new NotFoundError(`Product with id ${id} not found`);
   return updated;
 }
 

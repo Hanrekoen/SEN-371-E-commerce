@@ -1,0 +1,15 @@
+{
+  "name": "gadgetvault-payment-gateway",
+  "version": "1.0.0",
+  "description": "Standalone mock card authorisation service for the GadgetVault API to integrate against",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
