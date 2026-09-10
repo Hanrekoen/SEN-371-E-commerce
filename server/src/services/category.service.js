@@ -11,8 +11,8 @@ function slugify(value) {
     .replace(/^-+|-+$/g, "") 
 }
 
-async function list() {
-  return categoryRepository.list();
+async function list({ page = 1, limit = 20 } = {}) {
+  return categoryRepository.list({ page, limit });
 }
 
 async function getbyslug(slug) {

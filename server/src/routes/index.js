@@ -15,6 +15,29 @@ router.get("/health", (_req, res) =>
   })
 );
 
+// Milestone 3 (4.1): the OpenAPI document is served as a browsable page at
+// /api/docs and as raw JSON at /api/openapi.json.
+//
+// Guarded, because documentation is not worth failing a boot over: if
+// swagger-ui-express is not installed the API still starts and says why the
+// page is missing, rather than crashing on require.
+try {
+  const swaggerUi = require("swagger-ui-express");
+  const openapi = require("../../../docs/openapi.json");
+
+  router.get("/openapi.json", (_req, res) => res.json(openapi));
+  router.use(
+    "/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(openapi, {
+      customSiteTitle: "GadgetVault API",
+      swaggerOptions: { persistAuthorization: true },
+    })
+  );
+} catch (err) {
+  console.warn("[api] /api/docs is not being served: " + err.message);
+}
+
 router.use("/auth", require("./auth.routes"));                // Person 2
 router.use("/products", require("./product.routes"));         // Person 1
 router.use("/categories", require("./category.routes"));      // Person 4
