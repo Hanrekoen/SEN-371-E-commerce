@@ -170,18 +170,9 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" size="lg" full loading={busy}>
-              {isRegister ? "Create Account" : "Authorize Access"}
+              {isRegister ? "Create Account" : "Sign In"}
             </Button>
           </form>
-
-          <div className="gv-auth__divider"><span>Or continue with</span></div>
-
-          <div className="gv-auth__oauth">
-            {/* No OAuth provider is configured on the API, so these are shown
-                as unavailable rather than as buttons that fail on click. */}
-            <button type="button" disabled title="Single sign-on is not configured for this project">Google</button>
-            <button type="button" disabled title="Single sign-on is not configured for this project">Apple ID</button>
-          </div>
         </div>
       </section>
     </div>
