@@ -2,6 +2,7 @@
 const orderRepository = require("../repositories/order.repository");
 const productRepository = require("../repositories/product.repository");
 const userRepository = require("../repositories/user.repository");
+const { TRANSITIONS } = require("./order.service");
 const { toProductDTO } = require("../dtos/product.dto");
 
 // Dashboard figures. Every number here is derived from real data - where a
@@ -79,6 +80,9 @@ async function stats({ now = new Date() } = {}) {
       itemCount: o.items.length,
       totalCents: o.totalCents,
       status: o.status,
+      // The dashboard renders one button per entry, so the buttons can never
+      // offer a move the service would reject.
+      allowedTransitions: TRANSITIONS[o.status] || [],
       createdAt: o.createdAt,
     })),
     thresholds: { lowStock: LOW_STOCK_THRESHOLD },

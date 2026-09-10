@@ -106,7 +106,9 @@
 .gv-admin__table-wrap:focus-visible { outline: 2px solid var(--gv-primary); outline-offset: 4px; }
 /* shown only when the table cannot fit, see the 720px query below */
 .gv-admin__scroll-hint { display: none; }
-.gv-admin__table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.gv-admin__table { width: 100%; border-collapse: collapse; min-width: 820px; }
+.gv-admin__moves { display: flex; gap: var(--gv-2); justify-content: flex-end; }
+.gv-admin__final { color: var(--gv-text-dim); font-size: var(--gv-fs-xs); }
 .gv-admin__table th, .gv-admin__table td {
   padding: var(--gv-4) var(--gv-3);
   text-align: left;

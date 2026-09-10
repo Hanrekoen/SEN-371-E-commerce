@@ -4,12 +4,21 @@ import Alert from "../components/ui/Alert";
 import Sparkline from "../components/ui/Sparkline";
 import TrendChart from "../components/ui/TrendChart";
 import StatusPill from "../components/ui/StatusPill";
-import { getStats, adjustStock } from "../api/admin.api";
+import { getStats, adjustStock, updateOrderStatus } from "../api/admin.api";
 import { formatCents, formatCentsCompact } from "../utils/money";
 import { summaryMessage } from "../utils/apiErrors";
 import "./AdminDashboardPage.css";
 
 const RESTOCK_UNITS = 25;
+
+// Wording for each move the API allows. The server decides which of these are
+// offered for a given order; this only supplies the label.
+const TRANSITION_LABELS = {
+  paid: "Mark paid",
+  shipped: "Mark shipped",
+  delivered: "Mark delivered",
+  cancelled: "Cancel",
+};
 
 function Delta({ value }) {
   if (value === null || value === undefined) return null;
@@ -40,6 +49,7 @@ function StatTile({ label, value, delta, series, tone }) {
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
   const [busyId, setBusyId] = useState(null);
 
   const load = useCallback(async () => {
@@ -60,6 +70,27 @@ export default function AdminDashboardPage() {
       await load();
     } catch (err) {
       setError(summaryMessage(err, "Restock failed."));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  // Cancelling returns stock to the catalogue, so it is confirmed first.
+  async function moveOrder(order, next) {
+    if (next === "cancelled") {
+      const yes = window.confirm(
+        `Cancel ${order.orderNumber}? The items go back into stock and the order cannot be reopened.`
+      );
+      if (!yes) return;
+    }
+    setBusyId(order.id);
+    setNotice(null);
+    try {
+      await updateOrderStatus(order.id, next);
+      setNotice(`${order.orderNumber} is now ${next}.`);
+      await load();
+    } catch (err) {
+      setError(summaryMessage(err, `Could not move ${order.orderNumber} to ${next}.`));
     } finally {
       setBusyId(null);
     }
@@ -95,6 +126,7 @@ export default function AdminDashboardPage() {
       </header>
 
       {error && <div className="gv-admin__alert"><Alert tone="warning">{error}</Alert></div>}
+      {notice && <div className="gv-admin__alert"><Alert tone="success">{notice}</Alert></div>}
 
       <section className="gv-admin__kpis" aria-label="Key figures">
         <StatTile
@@ -190,6 +222,7 @@ export default function AdminDashboardPage() {
                   <th scope="col">Items</th>
                   <th scope="col" className="is-right">Total</th>
                   <th scope="col" className="is-right">Status</th>
+                  <th scope="col" className="is-right">Move to</th>
                 </tr>
               </thead>
               <tbody>
@@ -203,12 +236,31 @@ export default function AdminDashboardPage() {
                     </td>
                     <td className="is-right">{formatCents(o.totalCents)}</td>
                     <td className="is-right"><StatusPill status={o.status} /></td>
+                    <td className="is-right">
+                      {(o.allowedTransitions || []).length === 0 ? (
+                        <span className="gv-admin__final">Final</span>
+                      ) : (
+                        <div className="gv-admin__moves">
+                          {o.allowedTransitions.map((next) => (
+                            <Button
+                              key={next}
+                              size="sm"
+                              variant={next === "cancelled" ? "ghost" : "outline"}
+                              loading={busyId === o.id}
+                              onClick={() => moveOrder(o, next)}
+                            >
+                              {TRANSITION_LABELS[next] || next}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="gv-admin__scroll-hint">Scroll sideways for totals and status.</p>
+          <p className="gv-admin__scroll-hint">Scroll sideways for totals, status and actions.</p>
           </>
         )}
       </section>
