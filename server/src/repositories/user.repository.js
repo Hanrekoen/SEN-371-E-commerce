@@ -17,6 +17,14 @@ class UserRepository extends BaseRepository {
     return this.findOne({ email: email.toLowerCase().trim() });
   }
 
+  async countCustomers() {
+    return this.model.countDocuments({ role: "customer" }).exec();
+  }
+
+  async countCreatedSince(since) {
+    return this.model.countDocuments({ role: "customer", createdAt: { $gte: since } }).exec();
+  }
+
   // Logout invalidates every outstanding refresh token by bumping the
   // version the token's payload must match (see auth.service.refresh).
   async incrementTokenVersion(userId) {

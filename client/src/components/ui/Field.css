@@ -1,0 +1,36 @@
+/* align-content:start keeps the input its natural height when the field is
+   stretched by a taller sibling in the same row (one with a hint, say). */
+.gv-field { display: grid; gap: var(--gv-2); align-content: start; }
+
+.gv-field__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gv-3);
+}
+
+.gv-field__label {
+  font-size: var(--gv-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gv-text-muted);
+}
+
+.gv-field__input {
+  width: 100%;
+  padding: 14px var(--gv-4);
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-md);
+  color: var(--gv-text);
+  font-size: var(--gv-fs-md);
+  transition: border-color 0.15s ease;
+}
+.gv-field__input::placeholder { color: var(--gv-text-dim); }
+.gv-field__input:focus { border-color: var(--gv-primary); outline: none; }
+
+.gv-field.has-error .gv-field__input { border-color: var(--gv-danger); }
+
+.gv-field__error { color: var(--gv-danger); font-size: var(--gv-fs-sm); }
+.gv-field__hint  { color: var(--gv-text-dim); font-size: var(--gv-fs-sm); }

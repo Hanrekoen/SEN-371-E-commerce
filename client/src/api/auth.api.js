@@ -1,6 +1,21 @@
 import { request } from "./httpClient";
 import { setAccessToken, clearAccessToken } from "./tokenStore";
 
+// Who am I? The access token lives in memory only, so after a page reload the
+// app has no idea who is signed in until it asks. Called once on boot, after
+// the silent refresh.
+export function me() {
+  return request("/auth/me");
+}
+
+// Exchanges the httpOnly refresh cookie for a fresh access token. Rejects
+// when there is no valid cookie, which simply means "not signed in".
+export async function restoreSession() {
+  const data = await request("/auth/refresh", { method: "POST", auth: false });
+  setAccessToken(data.accessToken);
+  return me();
+}
+
 export async function register({ firstName, lastName, email, password }) {
   const data = await request("/auth/register", {
     method: "POST",

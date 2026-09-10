@@ -1,0 +1,63 @@
+/* Design tokens, read off the GadgetVault Figma frames.
+   Every colour, radius and step used anywhere in the app is declared here,
+   so a palette change is one file rather than a search-and-replace. */
+
+:root {
+  /* Surfaces, darkest first */
+  --gv-bg:            #08080b;
+  --gv-bg-alt:        #0b0b0f;
+  --gv-surface:       #121218;
+  --gv-surface-2:     #16161e;
+  --gv-surface-3:     #1c1c26;
+
+  --gv-border:        #23232d;
+  --gv-border-soft:   rgba(255, 255, 255, 0.06);
+
+  /* Text */
+  --gv-text:          #ffffff;
+  --gv-text-muted:    #9a9aa6;
+  --gv-text-dim:      #6e6e7a;
+
+  /* Brand */
+  --gv-primary:       #2f6bf6;
+  --gv-primary-hover: #4a80ff;
+  --gv-primary-soft:  rgba(47, 107, 246, 0.14);
+  --gv-accent:        #8b5cf6;
+  --gv-accent-soft:   rgba(139, 92, 246, 0.14);
+
+  /* Status */
+  --gv-success:       #22c55e;
+  --gv-teal:          #14b8a6;
+  --gv-warning:       #f59e0b;
+  --gv-danger:        #ef4444;
+  --gv-danger-soft:   rgba(239, 68, 68, 0.12);
+
+  /* Radii */
+  --gv-r-sm:   6px;
+  --gv-r-md:   10px;
+  --gv-r-lg:   14px;
+  --gv-r-xl:   18px;
+  --gv-r-pill: 999px;
+
+  /* Spacing, 4px base */
+  --gv-1:  4px;   --gv-2:  8px;   --gv-3:  12px;  --gv-4:  16px;
+  --gv-5:  20px;  --gv-6:  24px;  --gv-8:  32px;  --gv-10: 40px;
+  --gv-12: 48px;  --gv-16: 64px;  --gv-20: 80px;
+
+  /* Type */
+  --gv-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+             "Helvetica Neue", Arial, sans-serif;
+  --gv-fs-xs:  12px;
+  --gv-fs-sm:  14px;
+  --gv-fs-md:  16px;
+  --gv-fs-lg:  20px;
+  --gv-fs-xl:  28px;
+  --gv-fs-2xl: 40px;
+  --gv-fs-3xl: 56px;
+
+  --gv-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+
+  /* The content column every page aligns to */
+  --gv-page: 1280px;
+  --gv-nav-h: 72px;
+}

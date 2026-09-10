@@ -1,0 +1,77 @@
+.gv-footer {
+  margin-top: auto;
+  padding: var(--gv-16) 0 var(--gv-8);
+  background: var(--gv-bg-alt);
+  border-top: 1px solid var(--gv-border-soft);
+}
+
+.gv-footer__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: var(--gv-12);
+}
+
+.gv-footer__blurb {
+  margin-top: var(--gv-5);
+  max-width: 42ch;
+  color: var(--gv-text-muted);
+  font-size: var(--gv-fs-sm);
+}
+
+.gv-footer__columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gv-8);
+}
+
+.gv-footer__col-title {
+  margin-bottom: var(--gv-4);
+  font-size: var(--gv-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gv-text);
+}
+
+.gv-footer__col ul { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--gv-1); }
+/* padding keeps the tap target at ~32px without spreading the list out */
+.gv-footer__col a {
+  display: inline-block;
+  padding: var(--gv-2) 0;
+  color: var(--gv-text-muted);
+  font-size: var(--gv-fs-sm);
+}
+.gv-footer__col a:hover { color: var(--gv-text); }
+
+.gv-footer__bottom {
+  margin-top: var(--gv-12);
+  padding-top: var(--gv-6);
+  border-top: 1px solid var(--gv-border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gv-4);
+}
+
+.gv-footer__copy { color: var(--gv-text-dim); font-size: var(--gv-fs-sm); }
+
+.gv-footer__social { display: flex; gap: var(--gv-4); margin: 0; padding: 0; list-style: none; }
+.gv-footer__social button {
+  display: grid; place-items: center;
+  width: 32px; height: 32px;
+  background: none;
+  border: 0;
+  border-radius: var(--gv-r-sm);
+  color: var(--gv-text-dim);
+  cursor: pointer;
+}
+.gv-footer__social button:hover { color: var(--gv-text); background: var(--gv-surface); }
+
+@media (max-width: 900px) {
+  .gv-footer__top { grid-template-columns: 1fr; gap: var(--gv-10); }
+}
+@media (max-width: 560px) {
+  .gv-footer { padding-top: var(--gv-12); }
+  .gv-footer__columns { grid-template-columns: 1fr 1fr; gap: var(--gv-6); }
+  .gv-footer__bottom { flex-direction: column; align-items: flex-start; }
+}

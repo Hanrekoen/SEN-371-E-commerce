@@ -11,7 +11,7 @@ const { toProductDTO, toProductListDTO } = require("../dtos/product.dto");
 
 const WRITABLE_FIELDS = [
     "name", "slug", "sku", "brand", "description", "priceCents",
-    "categoryID", "stockQty", "images", "variants", "specs", "isActive",
+    "categoryId", "stockQty", "images", "variants", "specs", "isActive",
 ];
 
 function pickWriteable(data) {
@@ -23,8 +23,10 @@ function pickWriteable(data) {
 }
 
 async function list(query, { isAdmin = false } = {}) {
-  const result = await productRepository.search(query);
-  return {...result, items: toProductListDTO(result.items, { isAdmin }) };
+  // Admins manage the catalogue, so they see deactivated products too -
+  // a soft delete that hides a product from its own manager is a trap.
+  const result = await productRepository.search({ ...query, includeInactive: isAdmin });
+  return { ...result, items: toProductListDTO(result.items, { isAdmin }) };
 }
 
 async function getBySlug(slug) {
@@ -34,7 +36,7 @@ async function getBySlug(slug) {
 }
 
 async function getById(id, { isAdmin = false } = {}) {
-  const product = await productRepository.findByIdById(id);
+  const product = await productRepository.findById(id);
   if (!product) throw new NotFoundError(`Product with id ${id} not found`);
   return toProductDTO(product, { isAdmin });
 }
@@ -63,11 +65,28 @@ async function update(id, data) {
 async function deactivate(id) {
   const updated = await productRepository.updateById(id, { isActive: false });
   if (!updated) throw new NotFoundError(`Product with id ${id} not found`);
-  return updated;
+  return toProductDTO(updated, { isAdmin: true });
+}
+
+// Undo a deactivation. Without this a soft delete is one-way.
+async function reactivate(id) {
+  const updated = await productRepository.updateById(id, { isActive: true });
+  if (!updated) throw new NotFoundError(`Product with id ${id} not found`);
+  return toProductDTO(updated, { isAdmin: true });
+}
+
+// Restock from the dashboard's low-stock panel.
+async function adjustStock(id, delta) {
+  if (!Number.isInteger(delta) || delta === 0) {
+    throw new Error("adjustStock needs a non-zero integer delta");
+  }
+  const updated = await productRepository.adjustStock(id, delta);
+  if (!updated) throw new NotFoundError(`Product with id ${id} not found`);
+  return toProductDTO(updated, { isAdmin: true });
 }
 
 async function listBrands() {
   return productRepository.listBrands();
 }
 
-module.exports = { list, getBySlug, getById, create, update, deactivate, listBrands };
+module.exports = { list, getBySlug, getById, create, update, deactivate, reactivate, adjustStock, listBrands };

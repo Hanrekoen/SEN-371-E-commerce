@@ -1,0 +1,5 @@
+.gv-spark { width: 92px; height: 34px; display: block; }
+.gv-spark--success { color: var(--gv-success); }
+.gv-spark--primary { color: var(--gv-primary); }
+.gv-spark--warning { color: var(--gv-warning); }
+.gv-spark--accent  { color: var(--gv-accent); }

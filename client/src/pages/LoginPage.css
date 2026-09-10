@@ -1,0 +1,163 @@
+.gv-auth {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: calc(100vh - var(--gv-nav-h));
+}
+
+/* --- Left: the brand panel. The Figma frame uses a product photograph here;
+   until an asset exists this is a layered gradient in the same palette, so
+   the composition is right and swapping in a real image is one rule. --- */
+.gv-auth__hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--gv-12);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 15% 20%, rgba(139, 92, 246, 0.35), transparent 60%),
+    radial-gradient(90% 80% at 80% 70%, rgba(47, 107, 246, 0.28), transparent 65%),
+    linear-gradient(160deg, #14101f 0%, #0a0a12 60%, #08080b 100%);
+}
+
+/* A faint keyline grid, echoing the hardware-shelf photograph. */
+.gv-auth__hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(120% 100% at 30% 40%, #000 30%, transparent 75%);
+  pointer-events: none;
+}
+
+.gv-auth__hero-top, .gv-auth__hero-copy { position: relative; z-index: 1; }
+
+.gv-auth__hero-title {
+  max-width: 14ch;
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  line-height: 1.05;
+}
+.gv-auth__hero-sub {
+  margin-top: var(--gv-5);
+  max-width: 46ch;
+  color: var(--gv-text-muted);
+}
+
+/* --- Right: the form --- */
+.gv-auth__panel {
+  display: grid;
+  place-items: center;
+  padding: var(--gv-12) var(--gv-8);
+}
+.gv-auth__form-wrap { width: 100%; max-width: 420px; }
+
+.gv-auth__title { font-size: clamp(28px, 3vw, 38px); }
+.gv-auth__sub { margin-top: var(--gv-2); color: var(--gv-text-muted); }
+
+.gv-auth__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gv-1);
+  margin: var(--gv-6) 0 var(--gv-5);
+  padding: var(--gv-1);
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-md);
+}
+.gv-auth__tab {
+  padding: var(--gv-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--gv-r-sm);
+  color: var(--gv-text-muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+.gv-auth__tab.is-active { background: var(--gv-surface-3); color: var(--gv-text); }
+
+.gv-auth__alert { margin-bottom: var(--gv-4); }
+
+.gv-auth__form { display: grid; gap: var(--gv-4); }
+.gv-auth__row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gv-3); }
+
+.gv-auth__password { position: relative; }
+/* Sits over the input, clear of the error line beneath it. */
+.gv-auth__reveal {
+  position: absolute;
+  right: var(--gv-3);
+  top: 34px;
+  display: grid;
+  place-items: center;
+  width: 32px; height: 32px;
+  background: none; border: 0;
+  color: var(--gv-text-dim);
+  cursor: pointer;
+}
+.gv-auth__reveal:hover { color: var(--gv-text); }
+
+.gv-auth__forgot {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  font-size: var(--gv-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gv-primary);
+}
+
+.gv-auth__remember {
+  display: flex;
+  align-items: center;
+  gap: var(--gv-3);
+  color: var(--gv-text-muted);
+  font-size: var(--gv-fs-sm);
+}
+.gv-auth__remember input { width: 18px; height: 18px; accent-color: var(--gv-primary); }
+.gv-auth__remember input:disabled + span { opacity: 0.65; }
+
+.gv-auth__divider {
+  display: flex;
+  align-items: center;
+  gap: var(--gv-4);
+  margin: var(--gv-6) 0 var(--gv-4);
+  color: var(--gv-text-dim);
+  font-size: var(--gv-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.gv-auth__divider::before,
+.gv-auth__divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--gv-border);
+}
+
+.gv-auth__oauth { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gv-3); }
+.gv-auth__oauth button {
+  padding: var(--gv-3) var(--gv-4);
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-md);
+  color: var(--gv-text);
+  font-weight: 600;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (max-width: 980px) {
+  .gv-auth { grid-template-columns: 1fr; }
+  .gv-auth__hero { min-height: 260px; padding: var(--gv-8); }
+  .gv-auth__hero-title { font-size: 30px; }
+  .gv-auth__panel { padding: var(--gv-10) var(--gv-5); }
+}
+@media (max-width: 520px) {
+  .gv-auth__row { grid-template-columns: 1fr; }
+  .gv-auth__oauth { grid-template-columns: 1fr; }
+}

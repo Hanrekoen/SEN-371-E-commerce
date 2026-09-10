@@ -1,0 +1,70 @@
+@import "./tokens.css";
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--gv-bg);
+  color: var(--gv-text);
+  font-family: var(--gv-font);
+  font-size: var(--gv-fs-md);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { margin: 0; line-height: 1.15; letter-spacing: -0.02em; }
+h1 { font-size: var(--gv-fs-2xl); font-weight: 800; }
+h2 { font-size: var(--gv-fs-xl); font-weight: 700; }
+h3 { font-size: var(--gv-fs-lg); font-weight: 700; }
+p  { margin: 0; }
+
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--gv-primary-hover); }
+
+img { max-width: 100%; display: block; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* Visible focus everywhere. Removing it would fail the UX criterion and
+   makes the app unusable by keyboard. */
+:focus-visible {
+  outline: 2px solid var(--gv-primary);
+  outline-offset: 2px;
+  border-radius: var(--gv-r-sm);
+}
+
+/* Horizontal only - the shorthand would reset the vertical padding pages set
+   for themselves, which is how every page lost its top gutter once. */
+.gv-page {
+  width: 100%;
+  max-width: var(--gv-page);
+  margin: 0 auto;
+  padding-inline: var(--gv-6);
+}
+@media (max-width: 640px) { .gv-page { padding-inline: var(--gv-4); } }
+
+.gv-eyebrow {
+  font-size: var(--gv-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gv-text-muted);
+}
+
+.gv-muted { color: var(--gv-text-muted); }
+
+/* Screen-reader-only, for labels that are visually implied by an icon. */
+.gv-sr {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
