@@ -212,7 +212,7 @@ that resource; the standalone pieces have a single owner each.
 | Member | Milestone 3 role | Owns | Standalone piece |
 |---|---|---|---|
 | Obusitse Tlotlo Kodisang Bokaba | Person 1 — Backend & Data | products, orders | Wires the payment call into checkout |
-| **Hanre Koen** | Person 2 — API & Security | auth, security | Payment gateway integration; security middleware; OWASP review |
+| Hanre Koen | Person 2 — API & Security | auth, security | Payment gateway integration; security middleware; OWASP review |
 | Ryno Lourens | Person 3 — Frontend Architecture | cart | Reviews the API contract as its consumer; starts the React API client |
 | Zander Jacques Burger | Person 4 — UI/UX, QA & Release | categories | Swagger / OpenAPI documentation; deployment configuration |
 
