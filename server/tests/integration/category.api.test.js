@@ -1,11 +1,8 @@
 "use strict";
 
-// Categories: validation, DTO and pagination, through the REAL app.
-//
-// These exist because the Milestone 3 category work shipped as an unmounted
-// duplicate route file - the code was written, but nothing reached it, and
-// nothing failed to say so. A test that hits /api/categories is what makes
-// "it is wired in" a fact rather than an assumption.
+// Categories: validation, DTO and pagination, through the real app.
+// These exist because this work first shipped as an unmounted duplicate route
+// file - written, but unreachable, and nothing failed to say so.
 
 process.env.NODE_ENV = "test";
 process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/sen371-test";

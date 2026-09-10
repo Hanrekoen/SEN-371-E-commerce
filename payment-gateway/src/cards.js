@@ -1,14 +1,8 @@
 "use strict";
 
-// The behaviour table.
-//
-// Real gateways publish test card numbers that force a specific outcome so
-// integrators can exercise every branch on demand. This service does the
-// same, which is what makes the failure paths in the API demonstrable
-// rather than theoretical - you cannot screenshot a 503 you cannot cause.
-//
-// Anything not listed here is approved, provided it passes the Luhn check.
-
+// Test cards that force a specific outcome, the way real gateways publish
+// them - it is what makes the failure paths demonstrable rather than
+// theoretical. Anything not listed here is approved if it passes Luhn.
 const OUTCOMES = {
   "4000000000000002": { outcome: "declined", code: "card_declined",     message: "Card declined by issuer" },
   "4000000000000069": { outcome: "declined", code: "expired_card",      message: "Card has expired" },
@@ -18,12 +12,10 @@ const OUTCOMES = {
   "4000000000000259": { outcome: "timeout",  code: "timeout",           message: "Issuer did not respond" },
 };
 
-// Above this the issuer refuses regardless of card - gives the API a second,
-// card-independent way to force a decline during a demo.
+// A second, card-independent way to force a decline.
 const MAX_AMOUNT_CENTS = 5000000; // R50 000.00
 
-// Luhn checksum. Every real card number satisfies it, so rejecting a number
-// that fails is what a real gateway does before it ever reaches the issuer.
+// Luhn checksum - what a real gateway checks before reaching the issuer.
 function luhnValid(number) {
   const digits = String(number).replace(/\D/g, "");
   if (digits.length < 12 || digits.length > 19) return false;

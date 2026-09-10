@@ -12,11 +12,8 @@ const router = express.Router();
 // Every cart route requires a signed-in user.
 router.use(authenticate);
 
-// The service already rejects quantities that exceed stock (BusinessRuleError,
-// 422) - that's a business rule and stays in cart.service.js. This is the
-// layer above it: malformed input never reaches that check at all.
-// 100 is an arbitrary but generous per-line cap; it exists so a typo or a
-// scripted request can't ask the service to reason about quantity 999999.
+// The stock limit is a business rule and stays in cart.service.js (422).
+// This cap only stops malformed input reaching it at all.
 const MAX_LINE_QUANTITY = 100;
 
 const productIdParam = param("productId").isMongoId().withMessage("Invalid product id");

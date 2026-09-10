@@ -4,11 +4,8 @@ const PaymentProvider = require("./PaymentProvider");
 const MockPaymentProvider = require("./MockPaymentProvider");
 const StubPaymentProvider = require("./StubPaymentProvider");
 
-// The Strategy selector.
-//
-// This is the only place that knows which implementation exists. order.service
-// imports `paymentProvider` and calls authorize() on it; changing the strategy
-// is a line in .env, not an edit to the checkout code.
+// The Strategy selector - the only place that knows which implementations
+// exist. Changing strategy is a line in .env, not an edit to checkout.
 
 function createPaymentProvider(config = env.payment) {
   const strategy = (config && config.provider) || "mock";
@@ -23,13 +20,10 @@ function createPaymentProvider(config = env.payment) {
     });
   }
 
-  throw new Error(
-    `Unknown PAYMENT_PROVIDER "${strategy}" - expected "mock" or "stub"`
-  );
+  throw new Error(`Unknown PAYMENT_PROVIDER "${strategy}" - expected "mock" or "stub"`);
 }
 
-// Built once, lazily, on first checkout rather than at import time. Requiring
-// this module in a unit test must not demand a configured gateway.
+// Built lazily, so requiring this in a unit test does not demand a gateway.
 let instance = null;
 
 const paymentProvider = {
@@ -41,7 +35,7 @@ const paymentProvider = {
     return instance.authorize(request);
   },
 
-  /** Test seam: swap the strategy for one call, then reset(). */
+  // Test seam: swap the strategy for one run, then reset().
   use(provider) {
     instance = provider;
     return provider;

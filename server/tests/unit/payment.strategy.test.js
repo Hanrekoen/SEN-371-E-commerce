@@ -1,8 +1,6 @@
 "use strict";
 
-// config/env.js throws when these are missing, by design - a misconfigured
-// server should fail at startup, not at the first request. This file reaches
-// it through services/payment/index.js, so it supplies throwaway values
+// config/env.js throws when these are missing, by design. Supplied here
 // before the first require rather than relying on a real .env.
 process.env.NODE_ENV = "test";
 process.env.MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/sen371-test";

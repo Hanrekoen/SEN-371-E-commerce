@@ -15,12 +15,8 @@ router.get("/health", (_req, res) =>
   })
 );
 
-// Milestone 3 (4.1): the OpenAPI document is served as a browsable page at
-// /api/docs and as raw JSON at /api/openapi.json.
-//
-// Guarded, because documentation is not worth failing a boot over: if
-// swagger-ui-express is not installed the API still starts and says why the
-// page is missing, rather than crashing on require.
+// 4.1: Swagger UI at /api/docs, raw spec at /api/openapi.json. Guarded -
+// documentation is not worth failing a boot over.
 try {
   const swaggerUi = require("swagger-ui-express");
   const openapi = require("../../../docs/openapi.json");

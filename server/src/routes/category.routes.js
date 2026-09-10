@@ -8,17 +8,13 @@ const { authenticate, requireRole } = require("../middleware/auth");
 const validate = require("../middleware/validate");
 
 // PERSON 4 OWNS THIS FILE.
-//
-// Milestone 3 (4.2): the rules below are Person 4's, moved onto the shared
-// middleware/validate.js so a category validation failure produces the same
-// 400 envelope as every other endpoint rather than a hand-built one.
+// Milestone 3 (4.2): rules moved onto the shared middleware/validate.js, so a
+// category failure returns the same 400 envelope as every other endpoint.
 
 const router = express.Router();
 
-// slug is optional: category.service derives it from the name when absent.
-// When it IS supplied the format is enforced, because the service slugifies
-// whatever it is given and a malformed slug would silently become a
-// different string from the one the client asked for.
+// slug is optional - the service derives it from the name. When supplied the
+// format is checked, since slugify would silently change a malformed one.
 const categoryRules = [
   body("name")
     .trim()
@@ -38,9 +34,8 @@ const categoryRules = [
 
 const idParam = [param("id").isMongoId().withMessage("Invalid category id")];
 
-// 4.3: categories paginate like products and orders. The cap of 100 is
-// enforced here as well as in the repository - an unbounded ?limit= is how
-// a list endpoint becomes a denial-of-service lever.
+// 4.3: paginate like products and orders. Capped at 100 here and in the
+// repository - an unbounded ?limit= is a denial-of-service lever.
 const listRules = [
   query("page").optional().isInt({ min: 1 }).toInt(),
   query("limit").optional().isInt({ min: 1, max: 100 }).toInt(),

@@ -1,44 +1,815 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.0.3",
   "info": {
     "title": "GadgetVault API",
-    "version": "1.0.0",
-    "description": "API for the GadgetVault e-commerce project, SEN371 Milestone 3"
+    "version": "0.3.0",
+    "description": "Single-vendor e-commerce API for SEN371.\n\nEvery response uses one envelope: `{ success, data, error, meta }`. Errors set `success: false` and carry `error.code`, `error.message` and, for validation failures, `error.details` naming each offending field.\n\nMoney is always an integer number of cents.\n\n**Authentication.** `POST /auth/login` returns an access token; send it as `Authorization: Bearer <token>`. The refresh token is an httpOnly cookie scoped to `/api/auth` and never appears in a response body. Use the **Authorize** button above to try protected endpoints.\n\n**Rate limits.** 300 requests / 15 min per IP across the API, 60 / 15 min on writes, 10 / 15 min on login."
   },
   "servers": [
     {
       "url": "http://localhost:5000/api",
-      "description": "local dev"
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Liveness"
+    },
+    {
+      "name": "Auth",
+      "description": "Registration, login, token rotation"
+    },
+    {
+      "name": "Products",
+      "description": "Catalogue"
+    },
+    {
+      "name": "Categories",
+      "description": "Catalogue taxonomy"
+    },
+    {
+      "name": "Cart",
+      "description": "The signed-in user's cart"
+    },
+    {
+      "name": "Orders",
+      "description": "Checkout and order history"
+    },
+    {
+      "name": "Admin",
+      "description": "Administrator-only order management"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
     }
   ],
   "paths": {
-    "/categories": {
+    "/health": {
       "get": {
-        "summary": "get a paged list of categories",
         "tags": [
-          "Categories"
+          "Health"
         ],
+        "summary": "Liveness check",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "The API is up",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "example": "ok"
+                            },
+                            "time": {
+                              "type": "string",
+                              "format": "date-time"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Create a customer account",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "firstName",
+                  "lastName",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 50,
+                    "example": "Hanre"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 50,
+                    "example": "Koen"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "hanre@sen371.test"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "description": "At least 8 characters and at least one digit.",
+                    "example": "Password123!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created. A refresh token is set as an httpOnly cookie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/AuthPayload"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Authenticate",
+        "security": [],
+        "description": "Rate limited to 10 attempts per 15 minutes per IP. A wrong password and an unknown address return the same message, so the endpoint cannot be used to enumerate registered emails.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "hanre@sen371.test"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "Password123!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/AuthPayload"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "description": "Wrong credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "success": false,
+                  "data": null,
+                  "error": {
+                    "code": "UNAUTHORIZED",
+                    "message": "Invalid email or password",
+                    "details": null
+                  },
+                  "meta": null
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Rotate tokens",
+        "security": [],
+        "description": "Reads the httpOnly refresh cookie, issues a new access token and rotates the refresh cookie. Logging out invalidates every outstanding refresh token.",
+        "responses": {
+          "200": {
+            "description": "A new access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "accessToken": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Log out",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Invalidates every outstanding refresh token for this user by bumping their token version.",
+        "responses": {
+          "204": {
+            "description": "Logged out. No body."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "List products",
+        "security": [],
         "parameters": [
           {
             "name": "page",
             "in": "query",
             "schema": {
               "type": "integer",
+              "minimum": 1,
               "default": 1
-            }
+            },
+            "example": 1
           },
           {
             "name": "limit",
             "in": "query",
             "schema": {
               "type": "integer",
-              "default": 20
+              "minimum": 1,
+              "maximum": 100,
+              "default": 12
+            },
+            "description": "Capped at 100 - an unbounded limit is a denial-of-service lever.",
+            "example": 12
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "priceAsc",
+                "priceDesc",
+                "newest",
+                "rating"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "keyboard"
+          },
+          {
+            "name": "brand",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Aurora"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "keyboards"
+          },
+          {
+            "name": "minPrice",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "list of categories",
+            "description": "A page of products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Product"
+                          }
+                        },
+                        "meta": {
+                          "$ref": "#/components/schemas/PaginationMeta"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Create a product (admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Only fields declared by a validation rule are persisted, so unknown keys such as ratingAverage cannot be set by the client.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Product"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/products/brands": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Distinct brand names",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Brand names",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "example": [
+                            "Aurora",
+                            "Northwind",
+                            "Halcyon"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/products/{slug}": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Get a product by slug",
+        "security": [],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "aurora-mechanical-keyboard"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Product"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      "put": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Update a product (admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8d1"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Product"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Deactivate a product (admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "A soft delete - isActive becomes false. Orders referencing the product keep their snapshot.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8d1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deactivated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Product"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "List categories",
+        "security": [],
+        "description": "Paginated, and returns meta, so the shape matches products and orders.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Capped at 100 - an unbounded limit is a denial-of-service lever.",
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of categories",
             "content": {
               "application/json": {
                 "schema": {
@@ -54,6 +825,9 @@
                           "items": {
                             "$ref": "#/components/schemas/Category"
                           }
+                        },
+                        "meta": {
+                          "$ref": "#/components/schemas/PaginationMeta"
                         }
                       }
                     }
@@ -61,14 +835,23 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       },
       "post": {
-        "summary": "create a new category",
         "tags": [
           "Categories"
         ],
+        "summary": "Create a category (admin)",
         "security": [
           {
             "bearerAuth": []
@@ -86,7 +869,7 @@
         },
         "responses": {
           "201": {
-            "description": "category created",
+            "description": "Created",
             "content": {
               "application/json": {
                 "schema": {
@@ -108,47 +891,47 @@
             }
           },
           "400": {
-            "description": "validation failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
+            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "no token provided",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       }
     },
-    "/categories/{id}": {
+    "/categories/{slug}": {
       "get": {
-        "summary": "get a single category by id",
         "tags": [
           "Categories"
         ],
+        "summary": "Get a category by slug",
+        "security": [],
         "parameters": [
           {
-            "name": "id",
+            "name": "slug",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "keyboards"
           }
         ],
         "responses": {
           "200": {
-            "description": "category found",
+            "description": "The category",
             "content": {
               "application/json": {
                 "schema": {
@@ -170,22 +953,23 @@
             }
           },
           "404": {
-            "description": "category not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
-      },
+      }
+    },
+    "/categories/{id}": {
       "put": {
-        "summary": "update a category",
         "tags": [
           "Categories"
         ],
+        "summary": "Update a category (admin)",
         "security": [
           {
             "bearerAuth": []
@@ -197,7 +981,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8e2"
             }
           }
         ],
@@ -213,7 +999,7 @@
         },
         "responses": {
           "200": {
-            "description": "category updated",
+            "description": "Updated",
             "content": {
               "application/json": {
                 "schema": {
@@ -234,15 +1020,759 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
           "404": {
-            "description": "category not found",
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Delete a category (admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Refused with 422 while products still reference the category.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8e2"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted. No body."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/cart": {
+      "get": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Get the signed-in user's cart",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The cart",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Cart"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Empty the cart",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The now-empty cart",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Cart"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/cart/items": {
+      "post": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Add an item, or increase its quantity",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "The stock check uses the resulting quantity, not just the amount added.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCartItemInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The updated cart",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Cart"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/cart/items/{productId}": {
+      "patch": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Set the quantity of a line",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8d1"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCartItemInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated cart",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Cart"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Remove a line",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8d1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The updated cart",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Cart"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Checkout",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Decrements stock atomically, builds the order from server-calculated totals, then authorises the card with the payment provider. The amount sent is always the calculated total, never a figure from the request body. A decline or an unreachable provider rolls stock back and leaves the cart intact.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Paid. The order carries a paymentReference.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Order"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentDeclined"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "The signed-in user's order history",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 12
+            },
+            "description": "Capped at 100 - an unbounded limit is a denial-of-service lever.",
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Order"
+                          }
+                        },
+                        "meta": {
+                          "$ref": "#/components/schemas/PaginationMeta"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get one of the user's own orders",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Ownership is re-checked against the authenticated user, not taken from the URL.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8f3"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Order"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/orders": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List all orders (admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 12
+            },
+            "description": "Capped at 100 - an unbounded limit is a denial-of-service lever.",
+            "example": 20
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "paid",
+                "shipped",
+                "delivered",
+                "cancelled"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Order"
+                          }
+                        },
+                        "meta": {
+                          "$ref": "#/components/schemas/PaginationMeta"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/orders/{id}/status": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Advance an order's status (admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Allowed moves: pending to paid or cancelled; paid to shipped or cancelled; shipped to delivered. Anything else is 422. Cancelling returns stock.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8f3"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrderStatusInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Order"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       }
@@ -253,78 +1783,25 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "JWT"
+        "bearerFormat": "JWT",
+        "description": "Paste the accessToken returned by /auth/login."
       }
     },
     "schemas": {
-      "Category": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "651f2a3b9c1e4a0012ab34cd"
-          },
-          "name": {
-            "type": "string",
-            "example": "Headphones"
-          },
-          "slug": {
-            "type": "string",
-            "example": "headphones"
-          },
-          "description": {
-            "type": "string",
-            "example": "Wired and wireless headphones"
-          }
-        }
-      },
-      "CategoryInput": {
-        "type": "object",
-        "required": [
-          "name",
-          "slug"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "Headphones"
-          },
-          "slug": {
-            "type": "string",
-            "example": "headphones"
-          },
-          "description": {
-            "type": "string",
-            "example": "Wired and wireless headphones"
-          }
-        }
-      },
-      "Product": {
-        "type": "object",
-        "description": "TODO ask P1 for the product DTO shape"
-      },
-      "Cart": {
-        "type": "object",
-        "description": "TODO ask P3 for the cart DTO shape"
-      },
-      "Order": {
-        "type": "object",
-        "description": "TODO ask P1 for the order DTO shape"
-      },
-      "User": {
-        "type": "object",
-        "description": "TODO ask P2 for the user DTO shape (check toPublicUser)"
-      },
       "SuccessEnvelope": {
         "type": "object",
+        "required": [
+          "success",
+          "data",
+          "error",
+          "meta"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
             "example": true
           },
-          "data": {
-            "type": "object"
-          },
+          "data": {},
           "error": {
             "type": "object",
             "nullable": true,
@@ -332,40 +1809,902 @@
           },
           "meta": {
             "type": "object",
-            "nullable": true
+            "nullable": true,
+            "example": null
           }
         }
       },
       "ErrorEnvelope": {
         "type": "object",
+        "required": [
+          "success",
+          "data",
+          "error",
+          "meta"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
             "example": false
           },
           "data": {
-            "type": "object",
             "nullable": true,
             "example": null
           },
           "error": {
             "type": "object",
             "properties": {
+              "code": {
+                "type": "string",
+                "example": "VALIDATION_ERROR"
+              },
               "message": {
-                "type": "string"
+                "type": "string",
+                "example": "Request validation failed"
               },
               "details": {
                 "type": "array",
+                "nullable": true,
                 "items": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "example": "priceCents"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Price must be a non-negative integer"
+                    }
+                  }
                 }
               }
             }
           },
           "meta": {
-            "type": "object",
             "nullable": true,
             "example": null
+          }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 12
+          },
+          "total": {
+            "type": "integer",
+            "example": 47
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 4
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$",
+            "example": "6716f0a1c2d3e4f5a6b7c904"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Hanre"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Koen"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "hanre@sen371.test"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "admin"
+            ],
+            "example": "customer"
+          }
+        }
+      },
+      "AuthPayload": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "accessToken": {
+            "type": "string",
+            "description": "Short-lived JWT. Send as `Authorization: Bearer <token>`. The refresh token is set separately as an httpOnly cookie and never appears in a response body.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        }
+      },
+      "CategoryRef": {
+        "type": "object",
+        "description": "The product's category, flattened - never the full category document.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$",
+            "example": "6716f0a1c2d3e4f5a6b7c8e2"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "example": "Keyboards"
+          },
+          "slug": {
+            "type": "string",
+            "nullable": true,
+            "example": "keyboards"
+          }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$",
+            "example": "6716f0a1c2d3e4f5a6b7c8d1"
+          },
+          "name": {
+            "type": "string",
+            "example": "Aurora Mechanical Keyboard"
+          },
+          "slug": {
+            "type": "string",
+            "example": "aurora-mechanical-keyboard"
+          },
+          "sku": {
+            "type": "string",
+            "example": "GV-KB-AUR-01"
+          },
+          "brand": {
+            "type": "string",
+            "example": "Aurora"
+          },
+          "description": {
+            "type": "string",
+            "example": "Hot-swappable 75% keyboard with PBT keycaps."
+          },
+          "priceCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 34900
+          },
+          "category": {
+            "$ref": "#/components/schemas/CategoryRef"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "example": [
+              "https://cdn.gadgetvault.test/aurora-kb-1.jpg"
+            ]
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "example": [
+              {
+                "finish": "Graphite"
+              },
+              {
+                "finish": "Ivory"
+              }
+            ]
+          },
+          "specs": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "example": [
+              {
+                "label": "Switch",
+                "value": "Tactile brown"
+              }
+            ]
+          },
+          "ratingAverage": {
+            "type": "number",
+            "example": 4.6
+          },
+          "ratingCount": {
+            "type": "integer",
+            "example": 128
+          },
+          "inStock": {
+            "type": "boolean",
+            "description": "Derived from stockQty. The exact count is admin-only.",
+            "example": true
+          },
+          "stockQty": {
+            "type": "integer",
+            "description": "Admin responses only.",
+            "example": 12
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProductInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "slug",
+          "sku",
+          "brand",
+          "description",
+          "priceCents",
+          "categoryId",
+          "stockQty",
+          "images"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120,
+            "example": "Aurora Mechanical Keyboard"
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "example": "aurora-mechanical-keyboard"
+          },
+          "sku": {
+            "type": "string",
+            "pattern": "^[A-Z0-9-]+$",
+            "example": "GV-KB-AUR-01"
+          },
+          "brand": {
+            "type": "string",
+            "example": "Aurora"
+          },
+          "description": {
+            "type": "string",
+            "example": "Hot-swappable 75% keyboard with PBT keycaps."
+          },
+          "priceCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 34900
+          },
+          "categoryId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$",
+            "example": "6716f0a1c2d3e4f5a6b7c8e2"
+          },
+          "stockQty": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 12
+          },
+          "images": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "example": [
+              "https://cdn.gadgetvault.test/aurora-kb-1.jpg"
+            ]
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "specs": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$",
+            "example": "6716f0a1c2d3e4f5a6b7c8e2"
+          },
+          "name": {
+            "type": "string",
+            "example": "Keyboards"
+          },
+          "slug": {
+            "type": "string",
+            "example": "keyboards"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Mechanical and low-profile boards"
+          }
+        }
+      },
+      "CategoryInput": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 60,
+            "example": "Keyboards"
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Optional - derived from the name when omitted.",
+            "example": "keyboards"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 300,
+            "example": "Mechanical and low-profile boards"
+          }
+        }
+      },
+      "CartItem": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$",
+            "example": "6716f0a1c2d3e4f5a6b7c8d1"
+          },
+          "name": {
+            "type": "string",
+            "example": "Aurora Mechanical Keyboard"
+          },
+          "finish": {
+            "type": "string",
+            "nullable": true,
+            "example": "Graphite"
+          },
+          "unitPriceCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 34900
+          },
+          "quantity": {
+            "type": "integer",
+            "example": 2
+          },
+          "lineTotalCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 69800
+          },
+          "inStock": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "Cart": {
+        "type": "object",
+        "description": "Totals are recomputed on every read from live product prices; they are never stored on the cart.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartItem"
+            }
+          },
+          "itemCount": {
+            "type": "integer",
+            "example": 2
+          },
+          "subtotalCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 69800
+          },
+          "shippingCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 0
+          },
+          "taxCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 5584
+          },
+          "totalCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 75384
+          }
+        }
+      },
+      "AddCartItemInput": {
+        "type": "object",
+        "required": [
+          "productId",
+          "quantity"
+        ],
+        "properties": {
+          "productId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$",
+            "example": "6716f0a1c2d3e4f5a6b7c8d1"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "example": 2
+          },
+          "finish": {
+            "type": "string",
+            "maxLength": 60,
+            "example": "Graphite"
+          }
+        }
+      },
+      "UpdateCartItemInput": {
+        "type": "object",
+        "required": [
+          "quantity"
+        ],
+        "properties": {
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "example": 3
+          }
+        }
+      },
+      "ShippingAddress": {
+        "type": "object",
+        "required": [
+          "line1",
+          "city",
+          "province",
+          "postalCode",
+          "country"
+        ],
+        "properties": {
+          "line1": {
+            "type": "string",
+            "example": "14 Kloof Street"
+          },
+          "line2": {
+            "type": "string",
+            "nullable": true,
+            "example": "Unit 3B"
+          },
+          "city": {
+            "type": "string",
+            "example": "Cape Town"
+          },
+          "province": {
+            "type": "string",
+            "example": "Western Cape"
+          },
+          "postalCode": {
+            "type": "string",
+            "pattern": "^\\d{4}$",
+            "example": "8001"
+          },
+          "country": {
+            "type": "string",
+            "example": "South Africa"
+          }
+        }
+      },
+      "Card": {
+        "type": "object",
+        "description": "Forwarded to the payment provider and never stored. Only the last four digits are logged.",
+        "required": [
+          "number",
+          "expMonth",
+          "expYear",
+          "cvc"
+        ],
+        "properties": {
+          "number": {
+            "type": "string",
+            "example": "4242424242424242"
+          },
+          "expMonth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "example": 4
+          },
+          "expYear": {
+            "type": "integer",
+            "minimum": 2024,
+            "example": 2030
+          },
+          "cvc": {
+            "type": "string",
+            "pattern": "^\\d{3,4}$",
+            "example": "123"
+          }
+        }
+      },
+      "CheckoutInput": {
+        "type": "object",
+        "required": [
+          "shippingAddress",
+          "card"
+        ],
+        "properties": {
+          "shippingAddress": {
+            "$ref": "#/components/schemas/ShippingAddress"
+          },
+          "card": {
+            "$ref": "#/components/schemas/Card"
+          }
+        }
+      },
+      "OrderItem": {
+        "type": "object",
+        "description": "A price snapshot taken at checkout - a later price change never rewrites an order.",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$",
+            "example": "6716f0a1c2d3e4f5a6b7c8d1"
+          },
+          "name": {
+            "type": "string",
+            "example": "Aurora Mechanical Keyboard"
+          },
+          "finish": {
+            "type": "string",
+            "nullable": true,
+            "example": "Graphite"
+          },
+          "quantity": {
+            "type": "integer",
+            "example": 2
+          },
+          "unitPriceCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 34900
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$",
+            "example": "6716f0a1c2d3e4f5a6b7c8f3"
+          },
+          "orderNumber": {
+            "type": "string",
+            "example": "ORD-2026-014772"
+          },
+          "userId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$",
+            "example": "6716f0a1c2d3e4f5a6b7c904"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItem"
+            }
+          },
+          "subtotalCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 69800
+          },
+          "shippingCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 0
+          },
+          "taxCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 5584
+          },
+          "totalCents": {
+            "type": "integer",
+            "description": "Amount in cents",
+            "example": 75384
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "paid",
+              "shipped",
+              "delivered",
+              "cancelled"
+            ],
+            "example": "paid"
+          },
+          "shippingAddress": {
+            "$ref": "#/components/schemas/ShippingAddress"
+          },
+          "paymentReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "The payment provider's reference. Null until the payment is approved.",
+            "example": "PAY-M8XK2A-7Q4RD9PZ"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateOrderStatusInput": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "paid",
+              "shipped",
+              "delivered",
+              "cancelled"
+            ],
+            "example": "shipped"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Validation failed. `error.details` names each offending field.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "success": false,
+              "data": null,
+              "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Request validation failed",
+                "details": [
+                  {
+                    "field": "quantity",
+                    "message": "Quantity must be between 1 and 100"
+                  }
+                ]
+              },
+              "meta": null
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "No access token, or it is expired or malformed.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "success": false,
+              "data": null,
+              "error": {
+                "code": "UNAUTHORIZED",
+                "message": "Authentication required",
+                "details": null
+              },
+              "meta": null
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Authenticated, but not allowed to do this.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "success": false,
+              "data": null,
+              "error": {
+                "code": "FORBIDDEN",
+                "message": "You do not have permission to do that",
+                "details": null
+              },
+              "meta": null
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "No such resource.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "success": false,
+              "data": null,
+              "error": {
+                "code": "NOT_FOUND",
+                "message": "Resource not found",
+                "details": null
+              },
+              "meta": null
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "A unique value is already taken.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "success": false,
+              "data": null,
+              "error": {
+                "code": "CONFLICT",
+                "message": "That value is already in use",
+                "details": null
+              },
+              "meta": null
+            }
+          }
+        }
+      },
+      "UnprocessableEntity": {
+        "description": "Well-formed, but a business rule refuses it.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "success": false,
+              "data": null,
+              "error": {
+                "code": "RULE_VIOLATION",
+                "message": "Not enough stock for Aurora Mechanical Keyboard",
+                "details": null
+              },
+              "meta": null
+            }
+          }
+        }
+      },
+      "PaymentDeclined": {
+        "description": "The provider answered, and declined the card. Stock is rolled back and the cart is left intact.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "success": false,
+              "data": null,
+              "error": {
+                "code": "PAYMENT_DECLINED",
+                "message": "Insufficient funds",
+                "details": null
+              },
+              "meta": null
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Rate limit exceeded. See `RateLimit-*` response headers.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "success": false,
+              "data": null,
+              "error": {
+                "code": "TOO_MANY_REQUESTS",
+                "message": "Too many requests - please slow down and try again shortly",
+                "details": null
+              },
+              "meta": null
+            }
+          }
+        }
+      },
+      "ServiceUnavailable": {
+        "description": "The payment provider could not be reached. Stock is rolled back; the card was not charged.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "success": false,
+              "data": null,
+              "error": {
+                "code": "SERVICE_UNAVAILABLE",
+                "message": "The payment provider is not responding - your card has not been charged",
+                "details": null
+              },
+              "meta": null
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "Unexpected failure. No stack trace is included when NODE_ENV=production.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "success": false,
+              "data": null,
+              "error": {
+                "code": "INTERNAL_ERROR",
+                "message": "Something went wrong",
+                "details": null
+              },
+              "meta": null
+            }
           }
         }
       }

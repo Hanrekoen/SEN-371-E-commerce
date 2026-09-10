@@ -3,7 +3,7 @@ const express = require("express");
 const request = require("supertest");
 const { mongoSanitize, preventParamPollution } = require("../../src/middleware/sanitize");
 
-// PERSON 2 - the injection backstop and the parameter-pollution guard.
+// PERSON 2 - injection backstop and parameter-pollution guard.
 
 function buildApp() {
   const app = express();

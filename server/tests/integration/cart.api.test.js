@@ -1,14 +1,8 @@
 "use strict";
 
-// Cart validation and DTO, through the REAL app.
-//
-// Person 3's summary claims these results; this file is where they are
-// actually reproducible. It loads src/app.js rather than a hand-assembled
-// test app, so the assertions cover the middleware ORDER too - helmet, the
-// limiters, mongoSanitize, preventParamPollution and validate all sit in
-// front of the cart route exactly as they do in production.
-//
-// The repositories are faked in memory. Every layer above them is real.
+// Cart validation and DTO, through the real app - so these cover middleware
+// order too, not just behaviour. Repositories are faked; everything above
+// them is real.
 
 process.env.NODE_ENV = "test";
 process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/sen371-test";

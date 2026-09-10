@@ -2,14 +2,8 @@
 const PaymentProvider = require("./PaymentProvider");
 const { ServiceUnavailableError } = require("../../errors/AppError");
 
-// Strategy pattern - the test implementation.
-//
-// Same contract, no network. Tests that exercise checkout care about what the
-// order looks like after an approval or a decline, not about HTTP; making
-// them start a second server would be slow, flaky and beside the point.
-//
-// It answers on the same test-card numbers the real gateway does, so a test
-// and a manual demo force a decline the same way.
+// Same contract, no network. Answers on the same test cards as the real
+// gateway, so a test forces a decline the way a demo does.
 
 const DECLINE_CARDS = {
   "4000000000000002": { code: "card_declined",      message: "Card declined by issuer" },
@@ -21,17 +15,11 @@ const UNAVAILABLE_CARDS = ["4000000000000119", "4000000000000259"];
 const MAX_AMOUNT_CENTS = 5000000;
 
 class StubPaymentProvider extends PaymentProvider {
-  /**
-   * @param {Object}       [options]
-   * @param {boolean|null} [options.forceApproved]  true or false to override the card rules entirely
-   * @param {boolean}      [options.forceUnavailable] throw ServiceUnavailableError on every call
-   */
   constructor({ forceApproved = null, forceUnavailable = false } = {}) {
     super();
     this.forceApproved = forceApproved;
     this.forceUnavailable = forceUnavailable;
-    /** Every call recorded, so a test can assert what checkout actually sent. */
-    this.calls = [];
+    this.calls = []; // so a test can assert what checkout actually sent
   }
 
   async authorize({ amountCents, currency, orderNumber, card }) {
@@ -48,9 +36,7 @@ class StubPaymentProvider extends PaymentProvider {
     }
 
     if (this.forceApproved === true) return approve();
-    if (this.forceApproved === false) {
-      return decline("card_declined", "Your card was declined");
-    }
+    if (this.forceApproved === false) return decline("card_declined", "Your card was declined");
 
     const number = String(card && card.number || "").replace(/\D/g, "");
 

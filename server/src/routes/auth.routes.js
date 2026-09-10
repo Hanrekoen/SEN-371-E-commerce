@@ -9,17 +9,13 @@ const { authenticate } = require("../middleware/auth");
 const validate = require("../middleware/validate");
 
 // PERSON 2 OWNS THIS FILE.
-//
-// Milestone 3: the validate adapter that used to live here has moved to
-// middleware/validate.js so products, orders, cart and categories share it.
-// Behaviour is unchanged - same 400, same error.details shape.
+// Milestone 3: the validate adapter moved to middleware/validate.js so every
+// route file shares it. Behaviour unchanged.
 
 const router = express.Router();
 
-// Slows down credential stuffing / brute-force guessing without
-// affecting normal users, who never come close to this in 15 minutes.
-// The global limiter in app.js sits above this one; this stricter tier
-// stays because login is the endpoint actually worth guessing at.
+// Stricter than the global limiter, because login is the endpoint actually
+// worth guessing at. Normal users never approach 10 in 15 minutes.
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,

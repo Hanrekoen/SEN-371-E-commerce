@@ -2,19 +2,10 @@
 const PaymentProvider = require("./PaymentProvider");
 const { ServiceUnavailableError, ValidationError } = require("../../errors/AppError");
 
-// Strategy pattern - the real implementation.
-//
-// Makes an HTTP call over the network to the payment-gateway service, handles
-// the response, and copes when there isn't one. Node 22 has global fetch, so
-// there is no HTTP client dependency to add.
+// The real implementation: an HTTP call to the payment-gateway service.
+// Node 22 has global fetch, so there is no HTTP client dependency.
 
 class MockPaymentProvider extends PaymentProvider {
-  /**
-   * @param {Object} options
-   * @param {string} options.baseUrl    e.g. http://localhost:5001
-   * @param {string} options.apiKey
-   * @param {number} [options.timeoutMs=5000]
-   */
   constructor({ baseUrl, apiKey, timeoutMs = 5000 } = {}) {
     super();
     if (!baseUrl) {
@@ -26,9 +17,8 @@ class MockPaymentProvider extends PaymentProvider {
   }
 
   async authorize({ amountCents, currency, orderNumber, card }) {
-    // The amount is the one thing that must never be taken on trust. It comes
-    // from orderFactory's calculation; a caller passing anything else is a
-    // price-tampering bug and is stopped here as well as at the route.
+    // The amount must come from orderFactory's calculation. Anything else is
+    // a price-tampering bug, stopped here as well as at the route.
     if (!Number.isInteger(amountCents) || amountCents <= 0) {
       throw new Error("authorize() needs a positive integer amountCents from the calculated order total");
     }
@@ -37,20 +27,13 @@ class MockPaymentProvider extends PaymentProvider {
     try {
       response = await fetch(`${this.baseUrl}/authorize`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": this.apiKey,
-        },
+        headers: { "Content-Type": "application/json", "x-api-key": this.apiKey },
         body: JSON.stringify({ amountCents, currency, orderNumber, card }),
-        // A hung provider must not hang our API. Without this the request
-        // sits until the client gives up, holding a connection and a
-        // half-decremented order open the whole time.
-        signal: AbortSignal.timeout(this.timeoutMs),
+        signal: AbortSignal.timeout(this.timeoutMs), // a hung provider must not hang us
       });
     } catch (err) {
-      // No response at all: DNS failure, connection refused, socket reset,
-      // or our own timeout firing. All the same to the caller - we do not
-      // know whether the payment went through, so we must not claim it did.
+      // No response at all. We do not know whether the payment went through,
+      // so we must not claim it did.
       const timedOut = err.name === "TimeoutError" || err.name === "AbortError";
       console.error(
         `[payment] ${orderNumber} ${timedOut ? `no response within ${this.timeoutMs}ms` : `unreachable: ${err.message}`}`
@@ -64,13 +47,12 @@ class MockPaymentProvider extends PaymentProvider {
     try {
       body = await response.json();
     } catch {
-      console.error(`[payment] ${orderNumber} provider returned unreadable body, HTTP ${response.status}`);
+      console.error(`[payment] ${orderNumber} unreadable body, HTTP ${response.status}`);
       throw new ServiceUnavailableError(
         "The payment provider returned an unreadable response - your card has not been charged"
       );
     }
 
-    // --- approved ---------------------------------------------------------
     if (response.ok && body.status === "approved") {
       console.log(`[payment] ${orderNumber} approved ref=${body.reference}`);
       return {
@@ -81,7 +63,7 @@ class MockPaymentProvider extends PaymentProvider {
       };
     }
 
-    // --- declined: a normal answer from a working provider ----------------
+    // A decline is a normal answer, so it is a value and not an exception.
     if (response.status === 402 || body.status === "declined") {
       console.log(`[payment] ${orderNumber} declined code=${body.code}`);
       return {
@@ -92,9 +74,7 @@ class MockPaymentProvider extends PaymentProvider {
       };
     }
 
-    // --- our request was wrong -------------------------------------------
-    // Bad card details reach here. That is the customer's to fix, so it
-    // surfaces as a 400 rather than being hidden behind a 503.
+    // Bad card details are the customer's to fix, so a 400 rather than a 503.
     if (response.status === 400) {
       console.warn(`[payment] ${orderNumber} rejected by provider: ${body.message}`);
       throw new ValidationError("The payment provider rejected these card details", [
@@ -102,9 +82,8 @@ class MockPaymentProvider extends PaymentProvider {
       ]);
     }
 
-    // --- anything else: provider trouble ----------------------------------
-    // 401 lands here too. A bad API key is our misconfiguration, not the
-    // customer's problem, so it is logged loudly and returned as a 503.
+    // 401 lands here too: a bad API key is our misconfiguration, logged
+    // loudly and shown to the customer as a 503.
     console.error(
       `[payment] ${orderNumber} provider error HTTP ${response.status} code=${body.code} ${body.message || ""}`
     );

@@ -1,20 +1,20 @@
 "use strict";
 
-// PERSON 2 - the actual API integration.
-//
-// This is the test that answers the Milestone 3 criterion. It starts the real
-// payment-gateway service on an ephemeral port and drives MockPaymentProvider
-// against it over HTTP. Nothing is mocked: a socket is opened, a request is
-// serialised, a response is parsed, and every failure mode is provoked on
-// purpose rather than assumed.
+// PERSON 2 - the API integration itself. Starts the real gateway on an
+// ephemeral port and drives MockPaymentProvider against it over HTTP.
+// Nothing is mocked, and every failure mode is provoked on purpose.
 
 process.env.GATEWAY_API_KEY = "test-gateway-key";
-process.env.GATEWAY_SLOW_MS = "900"; // the timeout card stalls this long
 
-// The gateway is a separate package with its own node_modules. If it has not
-// been installed, say so plainly and skip - a missing sibling install should
-// read as "run npm ci in payment-gateway", not as a module-resolution stack
-// trace forty lines deep in body-parser.
+// The client must give up before the gateway answers. 5000 is the production
+// default from config/env.js, and generous enough that a cold first request
+// on a slow machine does not fail an approval that is actually fine.
+const CLIENT_TIMEOUT_MS = 5000;
+const GATEWAY_STALL_MS = 20000;
+process.env.GATEWAY_SLOW_MS = String(GATEWAY_STALL_MS);
+
+// Separate package, own node_modules. If it is not installed, skip with a
+// readable message instead of a resolution stack trace inside body-parser.
 let gatewayApp = null;
 let gatewayLoadError = null;
 try {
@@ -58,7 +58,7 @@ describeGateway("payment gateway integration (real HTTP)", () => {
       provider = new MockPaymentProvider({
         baseUrl,
         apiKey: "test-gateway-key",
-        timeoutMs: 400,
+        timeoutMs: CLIENT_TIMEOUT_MS,
       });
       done();
     });
@@ -127,16 +127,20 @@ describeGateway("payment gateway integration (real HTTP)", () => {
       const elapsed = Date.now() - started;
 
       expect(error).toBeInstanceOf(ServiceUnavailableError);
-      // The gateway would have answered at 900ms. We gave up at 400ms.
-      expect(elapsed).toBeLessThan(800);
-      expect(logs.join("\n")).toMatch(/no response within 400ms/);
-    }, 10000);
+      // The gateway would have answered at GATEWAY_STALL_MS; we gave up
+    // first. That gap is the point: without the client timeout this
+    // request would have hung for the whole stall.
+      expect(elapsed).toBeLessThan(GATEWAY_STALL_MS - 1000);
+      expect(logs.join("\n")).toMatch(
+      new RegExp(`no response within ${CLIENT_TIMEOUT_MS}ms`)
+    );
+    }, 30000);
 
     test("gateway is not listening at all", async () => {
       const dead = new MockPaymentProvider({
         baseUrl: "http://127.0.0.1:9",
         apiKey: "test-gateway-key",
-        timeoutMs: 400,
+        timeoutMs: CLIENT_TIMEOUT_MS,
       });
       const error = await dead.authorize(request()).catch((e) => e);
       expect(error).toBeInstanceOf(ServiceUnavailableError);
@@ -147,7 +151,7 @@ describeGateway("payment gateway integration (real HTTP)", () => {
       const misconfigured = new MockPaymentProvider({
         baseUrl,
         apiKey: "wrong-key",
-        timeoutMs: 400,
+        timeoutMs: CLIENT_TIMEOUT_MS,
       });
       const error = await misconfigured.authorize(request()).catch((e) => e);
       expect(error).toBeInstanceOf(ServiceUnavailableError);

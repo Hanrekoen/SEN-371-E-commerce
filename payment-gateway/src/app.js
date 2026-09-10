@@ -4,16 +4,11 @@ const { MAX_AMOUNT_CENTS, luhnValid, lookup } = require("./cards");
 
 // GadgetVault mock payment gateway.
 //
-// A separate service, deliberately. It has its own package.json, its own
-// port and its own response shape - the GadgetVault { success, data, error,
-// meta } envelope does not appear anywhere in this file. That is the point:
-// the API has to make a real HTTP call to something outside itself and
-// translate a foreign response into its own domain, which is exactly the
-// work an integration with Stripe or PayFast would involve.
-//
-// It is a mock in that no money moves. It is not a stub: the network call,
-// the API key, the status codes, the failure modes and the latency are all
-// real, and the API cannot tell the difference from the outside.
+// A separate service on purpose: own package.json, own port, own response
+// shape. The API has to make a real HTTP call and translate a foreign
+// response into its own domain - the work a Stripe integration would involve.
+// The network call, API key, status codes, latency and failures are real.
+// Only the money is imaginary.
 
 const API_KEY = process.env.GATEWAY_API_KEY || "dev-gateway-key";
 const TIMEOUT_CARD_DELAY_MS = Number(process.env.GATEWAY_SLOW_MS) || 15000;
@@ -21,8 +16,8 @@ const TIMEOUT_CARD_DELAY_MS = Number(process.env.GATEWAY_SLOW_MS) || 15000;
 const app = express();
 app.use(express.json({ limit: "16kb" }));
 
-// Only ever log the last four digits. A full PAN in a log file is the
-// classic way a system that never stores card data still leaks it.
+// Last four digits only - a full PAN in a log is how a system that never
+// stores card data still leaks it.
 function last4(number) {
   return String(number || "").replace(/\D/g, "").slice(-4);
 }
@@ -37,8 +32,7 @@ app.get("/health", (_req, res) =>
   res.json({ service: "payment-gateway", status: "ok", time: new Date().toISOString() })
 );
 
-// Every gateway authenticates its merchant. Header, not body, so the key
-// never lands in a request log that records payloads.
+// Header, not body, so the key never lands in a payload log.
 app.use((req, res, next) => {
   if (req.path === "/health") return next();
   if (req.get("x-api-key") !== API_KEY) {
@@ -91,10 +85,14 @@ app.post("/authorize", async (req, res) => {
   const rule = lookup(card.number);
 
   if (rule && rule.outcome === "timeout") {
-    // Answer far too late on purpose, so the caller's own timeout is what
-    // ends the request. This is the only way to prove a client timeout works.
+    // Answer far too late on purpose, so the caller's timeout ends it.
     log(orderNumber, amountCents, card.number, `slow (${TIMEOUT_CARD_DELAY_MS}ms)`);
-    await new Promise((resolve) => setTimeout(resolve, TIMEOUT_CARD_DELAY_MS));
+    await new Promise((resolve) => {
+      const timer = setTimeout(resolve, TIMEOUT_CARD_DELAY_MS);
+      // unref: an abandoned stall must not hold the process open. The
+      // listening socket keeps a real gateway alive regardless.
+      if (typeof timer.unref === "function") timer.unref();
+    });
     return res.status(200).json({
       status: "approved",
       reference: reference(),

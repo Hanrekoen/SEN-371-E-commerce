@@ -16,11 +16,8 @@ module.exports = {
   isProduction: process.env.NODE_ENV === "production",
   port: Number(process.env.PORT) || 5000,
   clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
-  // Rate limiting counts per IP. Behind a reverse proxy every request
-  // carries the proxy's IP, so the whole internet shares one bucket unless
-  // Express is told to read X-Forwarded-For. Trusting it when there is NO
-  // proxy is worse: anyone can then spoof the header and get a fresh bucket
-  // per request. Off by default, on only where a proxy actually terminates.
+  // Off by default: trusting X-Forwarded-For with no proxy in front lets a
+  // client spoof its IP and get a fresh rate-limit bucket per request.
   trustProxy: process.env.TRUST_PROXY === "true" ? 1 : Number(process.env.TRUST_PROXY) || false,
   mongoUri: process.env.MONGODB_URI,
   jwt: {
@@ -30,17 +27,13 @@ module.exports = {
     refreshTtl: process.env.REFRESH_TOKEN_TTL || "7d",
   },
 
-  // --- Payment gateway (Person 2, Milestone 3) ---
-  // Deliberately NOT in REQUIRED above. A teammate who has not started the
-  // gateway must still be able to boot the API and work on their own routes;
-  // the defaults below match payment-gateway/'s own defaults, so on a normal
-  // dev machine this needs no .env entries at all.
+  // Payment gateway (Milestone 3). Deliberately NOT in REQUIRED: the defaults
+  // match payment-gateway/, so a dev machine needs no .env entries for it.
   payment: {
-    // "mock" makes the real HTTP call. "stub" answers in-process, no network.
+    // "mock" = real HTTP call, "stub" = in-process.
     provider: process.env.PAYMENT_PROVIDER || (process.env.NODE_ENV === "test" ? "stub" : "mock"),
     apiUrl: process.env.PAYMENT_API_URL || "http://localhost:5001",
     apiKey: process.env.PAYMENT_API_KEY || "dev-gateway-key",
-    // A hung provider must not hang the API.
     timeoutMs: Number(process.env.PAYMENT_TIMEOUT_MS) || 5000,
     currency: process.env.PAYMENT_CURRENCY || "ZAR",
   },
