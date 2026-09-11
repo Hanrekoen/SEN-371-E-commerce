@@ -1,0 +1,155 @@
+.gv-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(8, 8, 11, 0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gv-border-soft);
+}
+
+.gv-nav__inner {
+  min-height: var(--gv-nav-h);
+  display: flex;
+  align-items: center;
+  gap: var(--gv-6);
+}
+
+.gv-nav__panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gv-6);
+}
+
+.gv-nav__links { display: flex; align-items: center; gap: var(--gv-6); }
+
+.gv-nav__link {
+  position: relative;
+  padding: var(--gv-2) 0;
+  font-size: var(--gv-fs-sm);
+  color: var(--gv-text-muted);
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+.gv-nav__link:hover { color: var(--gv-text); }
+.gv-nav__link.is-active { color: var(--gv-text); font-weight: 600; }
+
+/* The underline marks the current page. It is a separate element rather than
+   a border so it can sit clear of the text baseline. */
+.gv-nav__link.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -2px;
+  height: 2px;
+  border-radius: var(--gv-r-pill);
+  background: var(--gv-primary);
+}
+
+.gv-nav__actions { display: flex; align-items: center; gap: var(--gv-4); }
+
+.gv-nav__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.gv-nav__search-icon {
+  position: absolute;
+  left: var(--gv-3);
+  color: var(--gv-text-dim);
+  pointer-events: none;
+}
+.gv-nav__search input {
+  width: 260px;
+  padding: 10px var(--gv-3) 10px 42px;
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-md);
+  color: var(--gv-text);
+  font-size: var(--gv-fs-sm);
+}
+.gv-nav__search input::placeholder { color: var(--gv-text-dim); }
+.gv-nav__search input:focus { border-color: var(--gv-primary); outline: none; }
+
+.gv-nav__cart {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px; height: 40px;
+  border-radius: var(--gv-r-md);
+  color: var(--gv-text);
+}
+.gv-nav__cart:hover { background: var(--gv-surface); color: var(--gv-text); }
+
+.gv-nav__badge {
+  position: absolute;
+  top: 2px; right: 0;
+  min-width: 20px; height: 20px;
+  padding: 0 6px;
+  display: grid; place-items: center;
+  background: var(--gv-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: var(--gv-r-pill);
+}
+
+.gv-nav__signin,
+.gv-nav__account-name {
+  font-size: var(--gv-fs-sm);
+  font-weight: 600;
+  color: var(--gv-text);
+  white-space: nowrap;
+}
+.gv-nav__account { display: flex; align-items: center; gap: var(--gv-3); }
+.gv-nav__signout {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-size: var(--gv-fs-xs);
+  color: var(--gv-text-dim);
+}
+.gv-nav__signout:hover { color: var(--gv-text-muted); }
+
+.gv-nav__burger {
+  display: none;
+  margin-left: auto;
+  width: 40px; height: 40px;
+  align-items: center; justify-content: center;
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-md);
+  color: var(--gv-text);
+  cursor: pointer;
+}
+
+/* --- Responsive: below 1080 the search shrinks, below 900 the nav collapses
+   into a panel that stacks under the bar. --- */
+@media (max-width: 1080px) {
+  .gv-nav__search input { width: 180px; }
+  .gv-nav__links { gap: var(--gv-4); }
+}
+
+@media (max-width: 900px) {
+  .gv-nav__burger { display: inline-flex; }
+
+  .gv-nav__panel {
+    position: absolute;
+    left: 0; right: 0;
+    top: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--gv-4);
+    padding: var(--gv-5) var(--gv-6) var(--gv-6);
+    background: var(--gv-bg-alt);
+    border-bottom: 1px solid var(--gv-border);
+    display: none;
+  }
+  .gv-nav__panel.is-open { display: flex; }
+
+  .gv-nav__links { flex-direction: column; align-items: flex-start; gap: var(--gv-1); }
+  .gv-nav__link { width: 100%; padding: var(--gv-3) 0; font-size: var(--gv-fs-md); }
+  .gv-nav__link.is-active::after { display: none; }
+
+  .gv-nav__actions { flex-wrap: wrap; }
+  .gv-nav__search { flex: 1 1 100%; }
+  .gv-nav__search input { width: 100%; }
+}

@@ -8,8 +8,9 @@ class ProductRepository extends BaseRepository {
   }
 
   // Catalogue search: text query, category and brand filters, pagination.
-  async search({ q, categoryId, brand, minCents, maxCents, sort, page = 1, limit = 12 }) {
-    const filter = { isActive: true };
+  async search({ q, categoryId, brand, minCents, maxCents, sort, page = 1, limit = 12, includeInactive = false }) {
+    // Customers only ever see active products; admins manage all of them.
+    const filter = includeInactive ? {} : { isActive: true };
     if (q) filter.$text = { $search: q };
     if (categoryId) filter.categoryId = categoryId;
     if (brand) filter.brand = brand;
@@ -40,6 +41,26 @@ class ProductRepository extends BaseRepository {
 
   async findBySku(sku) {
     return this.findOne({ sku });
+  }
+
+  // Conditional so stock can never be driven below zero by a bad delta.
+  async adjustStock(productId, delta) {
+    const guard = delta < 0 ? { stockQty: { $gte: Math.abs(delta) } } : {};
+    return this.model
+      .findOneAndUpdate({ _id: productId, ...guard }, { $inc: { stockQty: delta } }, { new: true })
+      .exec();
+  }
+
+  async countLowStock(threshold) {
+    return this.model.countDocuments({ isActive: true, stockQty: { $lte: threshold } }).exec();
+  }
+
+  async findLowStock(threshold, limit = 5) {
+    return this.model
+      .find({ isActive: true, stockQty: { $lte: threshold } })
+      .sort({ stockQty: 1 })
+      .limit(limit)
+      .exec();
   }
 
   async findManyByIds(ids) {

@@ -52,10 +52,12 @@ function refreshAccessToken() {
  * @param {object} [options]
  * @param {string} [options.method]
  * @param {object} [options.body]     plain object, JSON-stringified for you
- * @param {boolean} [options.auth]    send the Bearer header (default true)
+ * @param {boolean} [options.auth]     send the Bearer header (default true)
+ * @param {boolean} [options.withMeta] resolve { data, meta } instead of data
+ *                                     alone - paginated endpoints need meta
  * @param {boolean} [options._retried] internal - prevents a refresh loop
  */
-export async function request(path, { method = "GET", body, auth = true, _retried = false } = {}) {
+export async function request(path, { method = "GET", body, auth = true, withMeta = false, _retried = false } = {}) {
   const headers = { "Content-Type": "application/json" };
   const token = getAccessToken();
   if (auth && token) headers.Authorization = `Bearer ${token}`;
@@ -82,6 +84,7 @@ export async function request(path, { method = "GET", body, auth = true, _retrie
   const responseBody = response.status === 204 ? null : await response.json().catch(() => null);
 
   if (response.ok) {
+    if (withMeta) return { data: responseBody?.data ?? null, meta: responseBody?.meta ?? null };
     return responseBody?.data ?? null;
   }
 
@@ -89,7 +92,7 @@ export async function request(path, { method = "GET", body, auth = true, _retrie
   if (canRefresh) {
     try {
       await refreshAccessToken();
-      return request(path, { method, body, auth, _retried: true });
+      return request(path, { method, body, auth, withMeta, _retried: true });
     } catch {
       // refreshAccessToken already cleared the token; fall through and
       // surface the original 401 as a normal ApiError below.

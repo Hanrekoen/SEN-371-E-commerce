@@ -1,0 +1,28 @@
+.gv-trend { position: relative; }
+
+.gv-trend__svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+.gv-trend__grid { stroke: var(--gv-border-soft); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.gv-trend__line { stroke: var(--gv-primary); }
+.gv-trend__crosshair { stroke: var(--gv-border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.gv-trend__ring { fill: var(--gv-surface); }
+.gv-trend__dot  { fill: var(--gv-primary); }
+
+.gv-trend__tip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: var(--gv-2) var(--gv-3);
+  background: var(--gv-surface-3);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-sm);
+  box-shadow: var(--gv-shadow);
+  pointer-events: none;
+  display: grid;
+  gap: 2px;
+  white-space: nowrap;
+}
+.gv-trend__tip-value { font-weight: 700; font-size: var(--gv-fs-sm); }
+.gv-trend__tip-meta  { color: var(--gv-text-muted); font-size: var(--gv-fs-xs); }
+
+.gv-trend__empty { color: var(--gv-text-dim); font-size: var(--gv-fs-sm); padding: var(--gv-8) 0; }

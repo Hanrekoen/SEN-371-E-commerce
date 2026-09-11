@@ -1600,6 +1600,579 @@
         }
       }
     },
+    "/admin/stats": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Dashboard figures (admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Revenue, orders, customers and conversion with 7-day series for sparklines, plus low-stock products and the most recent orders. Revenue counts only paid, shipped and delivered orders.",
+        "responses": {
+          "200": {
+            "description": "Dashboard statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "revenue": {
+                              "type": "object",
+                              "properties": {
+                                "todayCents": {
+                                  "type": "integer",
+                                  "description": "Amount in cents",
+                                  "example": 4825000
+                                },
+                                "deltaPct": {
+                                  "type": "number",
+                                  "example": 14.3
+                                },
+                                "series": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "integer"
+                                  },
+                                  "example": [
+                                    120000,
+                                    98000,
+                                    143000,
+                                    210000,
+                                    175000,
+                                    264000,
+                                    4825000
+                                  ]
+                                }
+                              }
+                            },
+                            "orders": {
+                              "type": "object",
+                              "properties": {
+                                "today": {
+                                  "type": "integer",
+                                  "example": 12
+                                },
+                                "deltaPct": {
+                                  "type": "number",
+                                  "example": 8.2
+                                },
+                                "series": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "integer"
+                                  }
+                                },
+                                "byStatus": {
+                                  "type": "object",
+                                  "additionalProperties": {
+                                    "type": "integer"
+                                  },
+                                  "example": {
+                                    "pending": 2,
+                                    "paid": 9,
+                                    "shipped": 4,
+                                    "delivered": 31,
+                                    "cancelled": 1
+                                  }
+                                },
+                                "total": {
+                                  "type": "integer",
+                                  "example": 47
+                                }
+                              }
+                            },
+                            "customers": {
+                              "type": "object",
+                              "properties": {
+                                "total": {
+                                  "type": "integer",
+                                  "example": 892
+                                },
+                                "newToday": {
+                                  "type": "integer",
+                                  "example": 6
+                                }
+                              }
+                            },
+                            "conversion": {
+                              "type": "object",
+                              "properties": {
+                                "rate": {
+                                  "type": "number",
+                                  "example": 3.2
+                                },
+                                "paidOrders": {
+                                  "type": "integer",
+                                  "example": 44
+                                }
+                              }
+                            },
+                            "trend": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "date": {
+                                    "type": "string",
+                                    "format": "date"
+                                  },
+                                  "revenueCents": {
+                                    "type": "integer"
+                                  },
+                                  "orders": {
+                                    "type": "integer"
+                                  }
+                                }
+                              }
+                            },
+                            "lowStock": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-fA-F]{24}$",
+                                    "example": "6716f0a1c2d3e4f5a6b7c8d1"
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "example": "NovaKey MX60 Mechanical"
+                                  },
+                                  "slug": {
+                                    "type": "string"
+                                  },
+                                  "stockQty": {
+                                    "type": "integer",
+                                    "example": 2
+                                  },
+                                  "image": {
+                                    "type": "string",
+                                    "nullable": true
+                                  }
+                                }
+                              }
+                            },
+                            "recentOrders": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-fA-F]{24}$",
+                                    "example": "6716f0a1c2d3e4f5a6b7c8f3"
+                                  },
+                                  "orderNumber": {
+                                    "type": "string",
+                                    "example": "ORD-2026-092854"
+                                  },
+                                  "customerEmail": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "vance@soma.test"
+                                  },
+                                  "itemSummary": {
+                                    "type": "string",
+                                    "example": "AeroPulse ANC Headset"
+                                  },
+                                  "itemCount": {
+                                    "type": "integer",
+                                    "example": 2
+                                  },
+                                  "totalCents": {
+                                    "type": "integer",
+                                    "description": "Amount in cents",
+                                    "example": 34900
+                                  },
+                                  "status": {
+                                    "type": "string",
+                                    "example": "paid"
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  }
+                                }
+                              }
+                            },
+                            "thresholds": {
+                              "type": "object",
+                              "properties": {
+                                "lowStock": {
+                                  "type": "integer",
+                                  "example": 5
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/products": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List products including deactivated ones (admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "The storefront list hides inactive products; this one does not, so an admin can find and reactivate something they soft-deleted. Includes stockQty.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 12
+            },
+            "description": "Capped at 100 - an unbounded limit is a denial-of-service lever.",
+            "example": 20
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "example": "keyboard"
+          },
+          {
+            "name": "brand",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8e2"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Product"
+                          }
+                        },
+                        "meta": {
+                          "$ref": "#/components/schemas/PaginationMeta"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/products/{id}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get a product by id (admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "By id rather than slug, because the edit form has the id and a deactivated product is not reachable by slug.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8d1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Product"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/products/{id}/reactivate": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Reactivate a deactivated product (admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8d1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reactivated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Product"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/products/{id}/stock": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Adjust stock (admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Restock from the dashboard's low-stock panel. The decrement is conditional, so stock can never be driven below zero.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{24}$",
+              "example": "6716f0a1c2d3e4f5a6b7c8d1"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "delta"
+                ],
+                "properties": {
+                  "delta": {
+                    "type": "integer",
+                    "minimum": -10000,
+                    "maximum": 10000,
+                    "description": "Non-zero. Positive restocks, negative removes.",
+                    "example": 25
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessEnvelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Product"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/admin/orders": {
       "get": {
         "tags": [

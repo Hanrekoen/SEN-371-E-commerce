@@ -1,0 +1,17 @@
+.gv-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border: 1px solid;
+  border-radius: var(--gv-r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.gv-pill--success { color: var(--gv-success); border-color: rgba(34, 197, 94, 0.45);  background: rgba(34, 197, 94, 0.08); }
+.gv-pill--info    { color: var(--gv-primary); border-color: rgba(47, 107, 246, 0.5);  background: rgba(47, 107, 246, 0.08); }
+.gv-pill--warning { color: var(--gv-warning); border-color: rgba(245, 158, 11, 0.45); background: rgba(245, 158, 11, 0.08); }
+.gv-pill--danger  { color: var(--gv-danger);  border-color: rgba(239, 68, 68, 0.45);  background: rgba(239, 68, 68, 0.08); }
+.gv-pill--neutral { color: var(--gv-text-muted); border-color: var(--gv-border); }
