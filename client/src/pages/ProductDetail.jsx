@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import apiRequest from "../utils/api";
+import * as productsApi from "../api/products.api";
 import { useCart } from "../context/CartContext";
+import { formatCents } from "../utils/money";
 import "./ProductDetail.css";
 
 function ProductDetail() {
-  const { id } = useParams();
-  const { addToCart } = useCart();
+  const { slug } = useParams();
+  const { addItem } = useCart();
 
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -18,23 +19,25 @@ function ProductDetail() {
     async function loadProduct() {
       try {
         setLoading(true);
-        const data = await apiRequest("/products/" + id);
+        setError(null);
+        const data = await productsApi.getProduct(slug);
         setProduct(data);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Could not load product");
       } finally {
         setLoading(false);
       }
     }
 
-    loadProduct();
-  }, [id]);
+    if (slug) loadProduct();
+  }, [slug]);
 
   function handleAddToCart() {
-    addToCart(product, quantity);
+    if (!product) return;
+
+    addItem({ productId: product.id, quantity });
     setAdded(true);
 
-    // reset the little confirmation message after a bit
     setTimeout(() => setAdded(false), 2000);
   }
 
@@ -50,17 +53,19 @@ function ProductDetail() {
     return <p className="status-text">product not found</p>;
   }
 
+  const productImage = product.images?.[0] || "/product-pictures/Obsidian%20x9%20black.jpg";
+
   return (
     <div className="product-detail">
       <img
-        src={product.imageUrl}
+        src={productImage}
         alt={product.name}
         className="product-image"
       />
 
       <div className="product-info">
         <h1>{product.name}</h1>
-        <p className="product-price">R{product.price}</p>
+        <p className="product-price">{formatCents(product.priceCents)}</p>
         <p className="product-description">{product.description}</p>
 
         <div className="quantity-row">

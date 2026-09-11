@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import apiRequest from "../utils/api";
+import * as ordersApi from "../api/orders.api";
+import { formatCents } from "../utils/money";
 import "./OrderHistory.css";
 
 function OrderHistory() {
@@ -11,10 +12,11 @@ function OrderHistory() {
     async function loadOrders() {
       try {
         setLoading(true);
-        const data = await apiRequest("/orders");
-        setOrders(data);
+        setError(null);
+        const response = await ordersApi.listMyOrders();
+        setOrders(response?.data ?? response ?? []);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Could not load order history");
       } finally {
         setLoading(false);
       }
@@ -24,7 +26,7 @@ function OrderHistory() {
   }, []);
 
   if (loading) {
-    return <p className="status-text">loading your orders...</p>;
+    return <p className="status-text">Loading your orders...</p>;
   }
 
   if (error) {
@@ -32,36 +34,36 @@ function OrderHistory() {
   }
 
   if (orders.length === 0) {
-    return <p className="status-text">you have no past orders yet</p>;
+    return <p className="status-text">You have no past orders yet</p>;
   }
 
   return (
     <div className="order-history">
-      <h1>order history</h1>
+      <h1>Order History</h1>
 
       <div className="order-list">
         {orders.map((order) => (
           <div className="order-card" key={order.id}>
             <div className="order-header">
-              <p className="order-id">order #{order.id}</p>
+              <p className="order-id">Order #{order.orderNumber || order.id}</p>
               <span className={"order-status status-" + order.status}>
                 {order.status}
               </span>
             </div>
 
             <p className="order-date">
-              placed on {new Date(order.createdAt).toLocaleDateString()}
+              Placed on {new Date(order.createdAt).toLocaleDateString()}
             </p>
 
             <ul className="order-items">
-              {order.items.map((item, index) => (
-                <li key={index}>
+              {order.items?.map((item, index) => (
+                <li key={`${order.id}-${item.productId ?? index}`}>
                   {item.name} x{item.quantity}
                 </li>
               ))}
             </ul>
 
-            <p className="order-total">total: R{order.total}</p>
+            <p className="order-total">Total: {formatCents(order.totalCents)}</p>
           </div>
         ))}
       </div>

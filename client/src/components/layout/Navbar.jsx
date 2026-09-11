@@ -9,11 +9,9 @@ import "./Navbar.css";
 const LINKS = [
   { to: "/", label: "Home", end: true },
   { to: "/catalog", label: "Catalog" },
-  // The Figma nav lists every frame, this one included. It points at a
-  // representative product rather than a real "product detail" section.
-  { to: "/product/obsidian-x-9-headset", label: "Product Detail" },
+  //{ to: "/product/obsidian-x-9-headset", label: "Product Detail" },
   { to: "/cart", label: "Cart" },
-  { to: "/checkout", label: "Checkout" },
+  //{ to: "/checkout", label: "Checkout" },
 ];
 
 export default function Navbar() {

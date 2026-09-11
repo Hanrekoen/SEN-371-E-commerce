@@ -1,30 +1,29 @@
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
+import { formatCents } from "../utils/money";
 import "./Cart.css";
 
 function Cart() {
-  const { cartItems, removeFromCart, updateQuantity } = useCart();
+  const { cart, removeItem, updateQuantity } = useCart();
   const navigate = useNavigate();
 
-  const total = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const items = cart?.items ?? [];
 
-  if (cartItems.length === 0) {
-    return <p className="status-text">your cart is empty</p>;
+  if (items.length === 0) {
+    return <p className="status-text">Your cart is empty</p>;
   }
 
   return (
     <div className="cart-page">
-      <h1>your cart</h1>
+      <h1>Your Cart</h1>
 
       <div className="cart-list">
-        {cartItems.map((item) => (
-          <div className="cart-item" key={item.id}>
+        {items.map((item) => (
+          <div className="cart-item" key={item.productId}>
             <div className="cart-item-info">
               <p className="cart-item-name">{item.name}</p>
-              <p className="cart-item-price">R{item.price} each</p>
+              <p className="cart-item-price">{formatCents(item.unitPriceCents)} Each</p>
+              <p className="cart-item-total">{formatCents(item.lineTotalCents)}</p>
             </div>
 
             <div className="cart-item-controls">
@@ -33,15 +32,15 @@ function Cart() {
                 min="1"
                 value={item.quantity}
                 onChange={(e) =>
-                  updateQuantity(item.id, Number(e.target.value))
+                  updateQuantity(item.productId, Number(e.target.value))
                 }
               />
 
               <button
                 className="remove-btn"
-                onClick={() => removeFromCart(item.id)}
+                onClick={() => removeItem(item.productId)}
               >
-                remove
+                Remove
               </button>
             </div>
           </div>
@@ -49,12 +48,12 @@ function Cart() {
       </div>
 
       <div className="cart-total">
-        <p>total: R{total.toFixed(2)}</p>
+        <p>Total: {formatCents(cart.totalCents)}</p>
         <button
           className="checkout-btn"
           onClick={() => navigate("/checkout")}
         >
-          go to checkout
+          Checkout
         </button>
       </div>
     </div>
