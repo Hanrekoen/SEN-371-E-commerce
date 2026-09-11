@@ -134,8 +134,34 @@ const CATEGORIES = [
     description: "Precision pointing devices." },
 ];
 
-//fallback product image placeholder
-const IMG = "https://placehold.co/800x800/0b0f16/3b82f6?text=";
+const PRODUCT_IMAGES = {
+  "aeropulse-anc-headset": [
+    "/product-pictures/AeroPulse%20ANC%20Headset%20Blk.jpg",
+    "/product-pictures/AeroPulse%20ANC%20Headset%20blue.jpg",
+    "/product-pictures/AeroPulse%20ANC%20Headset%20slvr.jpg",
+  ],
+  "obsidian-x-9-headset": [
+    "/product-pictures/Obsidian%20x9%20black.jpg",
+    "/product-pictures/Obsidian%20x9%20silver.jpg",
+  ],
+  "novakey-mx60-mechanical": [
+    "/product-pictures/NovaKey%20MX60%20Blk.jpg",
+    "/product-pictures/NovaKey%20MX60%20frost.jpg",
+  ],
+  "cortex-prime-pro-webcam": [
+    "/product-pictures/Cortex%20Prime%20webcam%20blk.jpg",
+  ],
+  "sonic-labs-dac-amplifier": [
+    "/product-pictures/Sonic%20labs%20DAC%20Amplifier.jpg",
+  ],
+  "apex-pro-neural-display": [
+    "/product-pictures/Apex%20pro%20neural%20display%20blk.jpg",
+  ],
+  "obsidian-x-9-carbon-mouse": [
+    "/product-pictures/Obsidian%20x9%20carbon%20mouse%20blk.jpg",
+    "/product-pictures/obsidian%20x9%20carbon%20mouse%20white.jpg",
+  ],
+};
 
 const PRODUCTS = [
   {
@@ -247,11 +273,8 @@ async function run() {
     return {
       ...rest,
       categoryId: bySlug[categorySlug],
-      images: [
-        IMG + encodeURIComponent(p.name),
-        IMG + encodeURIComponent(p.name + " 2"),
-        IMG + encodeURIComponent(p.name + " 3"),
-        IMG + encodeURIComponent(p.name + " 4"),
+      images: PRODUCT_IMAGES[p.slug] || [
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
       ],
       isActive: true,
     };
