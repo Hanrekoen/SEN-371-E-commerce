@@ -1,0 +1,78 @@
+.gv-pcard {
+  display: flex;
+  flex-direction: column;
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-lg);
+  overflow: hidden;
+  color: var(--gv-text);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  height: 100%;
+}
+.gv-pcard:hover { border-color: var(--gv-primary); transform: translateY(-2px); }
+
+.gv-pcard__media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--gv-surface-2);
+}
+.gv-pcard__media img { width: 100%; height: 100%; object-fit: cover; }
+.gv-pcard__media-empty {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%; color: var(--gv-text-dim); font-size: var(--gv-fs-sm);
+}
+.gv-pcard__oos {
+  position: absolute; top: var(--gv-3); right: var(--gv-3);
+  background: rgba(8, 8, 11, 0.85);
+  border: 1px solid var(--gv-border);
+  color: var(--gv-text-muted);
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 4px 10px; border-radius: var(--gv-r-pill);
+}
+
+
+.gv-pcard__body { padding: var(--gv-4); display: flex; flex-direction: column; gap: var(--gv-2); flex: 1; }
+
+.gv-pcard__meta { display: flex; align-items: center; justify-content: space-between; }
+.gv-pcard__category {
+  color: var(--gv-primary);
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+}
+.gv-pcard__rating {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: var(--gv-fs-xs); font-weight: 600; color: var(--gv-text);
+}
+.gv-pcard__rating svg { color: var(--gv-warning); }
+
+.gv-pcard__name {
+  font-size: var(--gv-fs-md);
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.gv-pcard__footer {
+  margin-top: auto;
+  padding-top: var(--gv-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.gv-pcard__price { font-size: var(--gv-fs-lg); font-weight: 800; }
+
+.gv-pcard__add {
+  background: var(--gv-surface-2);
+  border: 1px solid var(--gv-border);
+
+  color: var(--gv-text);
+  font-size: var(--gv-fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 16px;
+  border-radius: var(--gv-r-sm);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.gv-pcard__add:hover:not(:disabled) { background: var(--gv-primary); border-color: var(--gv-primary); }
+.gv-pcard__add:disabled { opacity: 0.5; cursor: not-allowed; }
