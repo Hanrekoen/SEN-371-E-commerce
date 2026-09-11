@@ -1,0 +1,82 @@
+.gv-hero {
+  border-bottom: 1px solid var(--gv-border);
+  background: radial-gradient(ellipse 900px 500px at 15% 0%, var(--gv-primary-soft), transparent 60%);
+}
+.gv-hero__inner { padding-block: var(--gv-16); }
+
+.gv-hero__title {
+  font-size: var(--gv-fs-3xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: var(--gv-4);
+}
+.gv-hero__title-accent { color: var(--gv-primary); }
+
+.gv-hero__copy { font-size: var(--gv-fs-lg); max-width: 46ch; margin-bottom: var(--gv-6); }
+
+.gv-hero__media {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--gv-r-xl);
+  overflow: hidden;
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+}
+.gv-hero__media img { width: 100%; height: 100%; object-fit: cover; }
+.gv-hero__media-empty { width: 100%; height: 100%; background: var(--gv-surface-2); }
+
+.gv-pill {
+  display: inline-flex;
+}
+
+.gv-vault-tile {
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--gv-2);
+  padding: var(--gv-5);
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-lg);
+  color: var(--gv-text);
+  height: 100%;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.gv-vault-tile:hover { border-color: var(--gv-primary); transform: translateY(-2px); color: var(--gv-text); }
+.gv-vault-tile__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: var(--gv-r-md);
+  background: var(--gv-surface-2);
+  color: var(--gv-primary);
+}
+.gv-vault-tile__name { font-weight: 700; }
+.gv-vault-tile__count { font-size: var(--gv-fs-sm); }
+
+.gv-link-accent { color: var(--gv-primary); font-weight: 600; font-size: var(--gv-fs-sm); }
+.gv-link-accent:hover { color: var(--gv-primary-hover); }
+
+.gv-membership {
+  border-top: 1px solid var(--gv-border);
+  border-bottom: 1px solid var(--gv-border);
+  background: radial-gradient(ellipse 700px 300px at 85% 50%, var(--gv-accent-soft), transparent 70%);
+  padding-block: var(--gv-10);
+
+}
+.gv-membership__eyebrow { color: var(--gv-accent); }
+
+.gv-newsletter { padding-block: var(--gv-16); }
+.gv-newsletter__form {
+  display: flex;
+  gap: var(--gv-3);
+  max-width: 460px;
+  margin-inline: auto;
+}
+.gv-newsletter__form .form-control { flex: 1; }
+
+@media (max-width: 576px) {
+  .gv-hero__title { font-size: var(--gv-fs-2xl); }
+  .gv-newsletter__form { flex-direction: column; }
+}

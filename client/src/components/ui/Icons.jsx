@@ -50,3 +50,23 @@ export const FacebookIcon = (p) => (
 export const YoutubeIcon = (p) => (
   <svg {...base} {...p} aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="4" /><path d="m10.5 9.5 5 2.5-5 2.5z" /></svg>
 );
+
+export const StarIcon = (p) => (
+  <svg width={p.width || 16} height={p.height || 16} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...p}>
+    <path d="m12 2.5 2.9 6.6 7.1.7-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7-5.4-4.7 7.1-.7z" />
+  </svg>
+);
+
+// Category tile icons - one per seeded category slug (see HomePage.jsx).
+export const MusicIcon = (p) => (
+  <svg {...base} {...p} aria-hidden="true"><path d="M9 18V5l11-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" /></svg>
+);
+export const KeyboardIcon = (p) => (
+  <svg {...base} {...p} aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2" /><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12" /></svg>
+);
+export const CameraIcon = (p) => (
+  <svg {...base} {...p} aria-hidden="true"><path d="M4 8h3l1.6-2.2h6.8L17 8h3v11H4z" /><circle cx="12" cy="13.5" r="3.4" /></svg>
+);
+export const MonitorIcon = (p) => (
+  <svg {...base} {...p} aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5" /><path d="M8.5 20h7M12 16.5V20" /></svg>
+);

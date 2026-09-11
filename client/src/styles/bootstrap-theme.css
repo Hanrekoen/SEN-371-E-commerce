@@ -1,0 +1,65 @@
+/*
+ * Bootstrap is used here for layout (container/row/col) and a handful of
+ * components (form-select, form-check, pagination) on the Home and Catalog
+ * pages only. No new colours are introduced here.
+ */
+
+:root {
+  --bs-body-bg: var(--gv-bg);
+  --bs-body-color: var(--gv-text);
+  --bs-border-color: var(--gv-border);
+  --bs-border-radius: var(--gv-r-md);
+  --bs-border-radius-sm: var(--gv-r-sm);
+  --bs-border-radius-lg: var(--gv-r-lg);
+
+  --bs-primary: var(--gv-primary);
+  --bs-primary-rgb: 47, 107, 246;
+  --bs-link-color: var(--gv-primary);
+  --bs-link-hover-color: var(--gv-primary-hover);
+
+  --bs-font-sans-serif: var(--gv-font);
+}
+
+/* Bootstrap sets body background/color again itself - restate ours so
+   load order can't flip it back to Bootstrap's white/black defaults. */
+body { background: var(--gv-bg); color: var(--gv-text); }
+
+.form-control,
+.form-select {
+
+  background-color: var(--gv-surface);
+  border-color: var(--gv-border);
+  color: var(--gv-text);
+}
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--gv-surface);
+  color: var(--gv-text);
+  border-color: var(--gv-primary);
+  box-shadow: 0 0 0 0.2rem var(--gv-primary-soft);
+}
+.form-control::placeholder { color: var(--gv-text-dim); }
+.form-select option { background-color: var(--gv-surface); }
+
+.form-check-input {
+  background-color: var(--gv-surface);
+  border-color: var(--gv-border);
+}
+.form-check-input:checked {
+  background-color: var(--gv-primary);
+  border-color: var(--gv-primary);
+}
+.form-check-label { color: var(--gv-text); }
+
+.page-link {
+  background-color: var(--gv-surface);
+  border-color: var(--gv-border);
+  color: var(--gv-text);
+}
+.page-link:hover { background-color: var(--gv-surface-2); color: var(--gv-text); }
+.page-item.active .page-link {
+  background-color: var(--gv-primary);
+
+  border-color: var(--gv-primary);
+}
+.page-item.disabled .page-link { background-color: transparent; color: var(--gv-text-dim); }
