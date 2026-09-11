@@ -67,9 +67,9 @@ export default function CatalogPage() {
 
     productsApi
       .listProducts({ q, categoryId, brand, minPrice, maxPrice, sort, page, limit: PAGE_SIZE })
-      .then(({ items, meta: responseMeta }) => {
+      .then(({ data, meta: responseMeta }) => {
         if (cancelled) return;
-        setProducts(items || []);
+        setProducts(data || []);
         setMeta(responseMeta || { page: 1, totalPages: 1, total: 0 });
       })
       .catch((e) => !cancelled && setError(e))

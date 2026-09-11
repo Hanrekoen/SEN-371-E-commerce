@@ -7,9 +7,7 @@
  *
  * Person 4 owns this file going forward - extend it with users and orders.
  */
-//const { connect, disconnect } = require("../src/config/database");
-//const Category = require("../src/models/category.model");
-//const Product = require("../src/models/product.model");
+
 
 const bcrypt = require("bcrypt");
 const { connect, disconnect } = require("../src/config/database");
@@ -136,6 +134,7 @@ const CATEGORIES = [
     description: "Precision pointing devices." },
 ];
 
+//fallback product image placeholder
 const IMG = "https://placehold.co/800x800/0b0f16/3b82f6?text=";
 
 const PRODUCTS = [
@@ -144,6 +143,7 @@ const PRODUCTS = [
     brand: "AeroPulse", categorySlug: "audio-architecture", priceCents: 34900, stockQty: 24,
     ratingAverage: 4.8, ratingCount: 1124,
     description: "Audiophile grade electrostatic drivers with hybrid neural noise cancellation.",
+    
     variants: [ { name: "Obsidian Black", hex: "#111418" }, { name: "Arctic Silver", hex: "#C9CED6" }, { name: "Vault Blue", hex: "#2563EB" } ],
     specs: [
       { label: "Driver Tech", value: "46mm Electrostatic" },

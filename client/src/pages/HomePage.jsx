@@ -38,8 +38,8 @@ export default function HomePage() {
       try {
         return await productsApi.getProduct(HERO_SLUG);
       } catch {
-        const { items } = await productsApi.listProducts({ sort: "rating", limit: 1 });
-        return items?.[0] || null;
+        const { data } = await productsApi.listProducts({ sort: "rating", limit: 1 });
+        return data?.[0] || null;
       }
     }
 
@@ -51,7 +51,7 @@ export default function HomePage() {
       .then(async ([heroProduct, categoryList, trendingResult]) => {
         if (cancelled) return;
         setHero(heroProduct);
-        setTrending(trendingResult.items || []);
+        setTrending(trendingResult.data || []);
 
         // Item counts per category aren't in the category DTO, so they're
         // fetched with one lightweight request each (limit: 1, only meta.total
