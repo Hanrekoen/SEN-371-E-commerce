@@ -44,6 +44,10 @@ function isMutating(req) {
          req.method === "PATCH" || req.method === "DELETE";
 }
 
-// Tier 3 is the login limiter, kept in auth.routes.js next to the endpoint.
-
-module.exports = { apiLimiter, writeLimiter, WINDOW_MS };
+// Tier 3 is the login limiter, kept in auth.routes.js next to the endpoint -
+// but it shares reject() and skipInTests() from here, so all three tiers
+// answer in the same envelope and all three are switched off in tests by the
+// same flag. It used to define its own message and no skip, which meant any
+// suite signing in more than ten times started failing on a 429 that had
+// nothing to do with what it was testing.
+module.exports = { apiLimiter, writeLimiter, WINDOW_MS, reject, skipInTests };

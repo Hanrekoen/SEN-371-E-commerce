@@ -9,6 +9,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminProductsPage from "./pages/AdminProductsPage";
+import AdminCategoriesPage from "./pages/AdminCategoriesPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
@@ -41,6 +42,7 @@ export default function App() {
 
         <Route path="admin" element={<RequireAuth role="admin"><AdminDashboardPage /></RequireAuth>} />
         <Route path="admin/products" element={<RequireAuth role="admin"><AdminProductsPage /></RequireAuth>} />
+        <Route path="admin/categories" element={<RequireAuth role="admin"><AdminCategoriesPage /></RequireAuth>} />
 
         {/* A wrong URL says so, instead of silently redirecting home. */}
         <Route path="*" element={<NotFoundPage />} />

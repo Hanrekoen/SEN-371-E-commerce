@@ -7,6 +7,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const controller = require("../controllers/auth.controller");
 const { authenticate } = require("../middleware/auth");
 const validate = require("../middleware/validate");
+const { reject, skipInTests, WINDOW_MS } = require("../middleware/rateLimit");
 
 // PERSON 2 OWNS THIS FILE.
 // Milestone 3: the validate adapter moved to middleware/validate.js so every
@@ -16,12 +17,19 @@ const router = express.Router();
 
 // Stricter than the global limiter, because login is the endpoint actually
 // worth guessing at. Normal users never approach 10 in 15 minutes.
+//
+// It uses the shared reject() and skipInTests() from middleware/rateLimit so
+// a login 429 comes back through the same error path as every other 429, and
+// so it is switched off in tests by the same RATE_LIMIT_IN_TESTS flag as the
+// other two tiers. Before that it had neither: a suite that signed in more
+// than ten times failed on a 429 unrelated to what it was testing.
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: WINDOW_MS,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, data: null, error: { code: "RATE_LIMITED", message: "Too many login attempts, try again later" }, meta: null },
+  skip: skipInTests,
+  handler: reject("Too many login attempts, try again later"),
 });
 
 const registerRules = [

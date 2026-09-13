@@ -8,11 +8,30 @@
     "start": "node src/server.js",
     "seed": "node scripts/seed.js",
     "test": "cross-env NODE_ENV=test jest --runInBand",
+    "test:unit": "cross-env NODE_ENV=test jest tests/unit --runInBand",
+    "test:integration": "cross-env NODE_ENV=test jest tests/integration --runInBand",
+    "test:function": "cross-env NODE_ENV=test jest tests/function --runInBand",
+    "test:coverage": "cross-env NODE_ENV=test jest --runInBand --coverage",
     "lint": "eslint src"
   },
   "jest": {
     "testEnvironment": "node",
-    "testTimeout": 20000
+    "testTimeout": 20000,
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js",
+      "!src/config/**",
+      "!src/docs/**"
+    ],
+    "coverageReporters": ["text", "text-summary", "html", "lcov"],
+    "coverageThreshold": {
+      "global": {
+        "statements": 72,
+        "branches": 55,
+        "functions": 62,
+        "lines": 74
+      }
+    }
   },
   "license": "UNLICENSED",
   "directories": {

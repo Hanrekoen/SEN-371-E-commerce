@@ -248,13 +248,20 @@ export default function AdminProductsPage() {
                   required
                 >
                   <option value="" disabled>
-                    {categories.length ? "Choose a category" : "No categories available"}
+                    {categories.length ? "Choose a category" : "No categories yet"}
                   </option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
                 {formErrors.categoryId && <p className="gv-field__error">{formErrors.categoryId}</p>}
+                {/* Met at exactly the moment it blocks them, with the fix one
+                    click away rather than something to go and find. */}
+                {categories.length === 0 && (
+                  <p className="gv-field__hint">
+                    A product needs a category. <Link to="/admin/categories">Add one first</Link>.
+                  </p>
+                )}
               </div>
             </div>
 

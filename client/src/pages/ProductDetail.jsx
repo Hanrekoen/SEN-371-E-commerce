@@ -96,7 +96,11 @@ export default function ProductDetail() {
   }
 
   if (error || !product) {
-    const missing = error?.status === 404 || !product;
+    // When there IS an error the status decides: only a 404 means the product
+    // does not exist. `|| !product` here would have made every failure read as
+    // "not found", telling someone their catalogue was missing a product when
+    // really the API was down.
+    const missing = error ? error.status === 404 : true;
     return (
       <div className="gv-page gv-pdp gv-pdp--message">
         <Alert tone={missing ? "warning" : "danger"} title={missing ? "Product not found" : "Could not load this product"}>
