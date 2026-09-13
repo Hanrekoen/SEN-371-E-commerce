@@ -192,7 +192,7 @@ export default function AdminProductsPage() {
     <div className="gv-page gv-adminp">
       <header className="gv-adminp__head">
         <div>
-          <h1>Catalogue</h1>
+          <h1>Manage Catalogue</h1>
           <p className="gv-muted">
             {products.length} product{products.length === 1 ? "" : "s"}, including deactivated ones.
           </p>

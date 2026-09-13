@@ -7,7 +7,7 @@ export default function Pagination({ page, totalPages, onChange }) {
   for (let p = windowStart; p <= windowEnd; p++) pages.push(p);
 
   return (
-    <nav aria-label="Catalog pages">
+    <nav aria-label="Catalogue pages">
       <ul className="pagination justify-content-center mb-0">
         <li className={`page-item ${page <= 1 ? "disabled" : ""}`}>
           <button className="page-link" onClick={() => onChange(page - 1)} disabled={page <= 1}>

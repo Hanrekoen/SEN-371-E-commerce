@@ -118,7 +118,7 @@ export default function CatalogPage() {
       {/* Present but visually hidden - the Figma frame has no on-page
           heading (the section title lives in the navbar), but every page
           still needs exactly one real h1 for screen reader users. */}
-      <h1 className="gv-sr">{activeCategory ? activeCategory.name : "Catalog"}</h1>
+      <h1 className="gv-sr">{activeCategory ? activeCategory.name : "Catalogue"}</h1>
 
       <div className="row g-4">
         {/* Filters */}
