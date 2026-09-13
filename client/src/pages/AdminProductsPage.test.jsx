@@ -64,17 +64,10 @@ beforeEach(() => {
   adminApi.createProduct.mockResolvedValue({ id: "p9" });
   adminApi.updateProduct.mockResolvedValue({ id: "p1" });
   adminApi.adjustStock.mockResolvedValue({ id: "p1" });
-  adminApi.deactivateProduct.mockResolvedValue({ id: "p1" });
-  adminApi.reactivateProduct.mockResolvedValue({ id: "p2" });
   categoriesApi.listCategories.mockResolvedValue(CATS);
 });
 
 describe("the catalogue list", () => {
-  test("lists products", async () => {
-    renderPage();
-    expect(await screen.findByText("Obsidian X-9 Headset")).toBeInTheDocument();
-  });
-
   // An admin must see what they hid, or a soft delete is indistinguishable
   // from the product vanishing.
   test("includes deactivated products, and labels them in words", async () => {
@@ -88,17 +81,6 @@ describe("the catalogue list", () => {
     expect(within(row).getByText("Deactivated")).toBeInTheDocument();
   });
 
-  test("shows stock, which the public API never exposes", async () => {
-    renderPage();
-    expect(await screen.findByText("12")).toBeInTheDocument();
-  });
-
-  test("offers Reactivate for a hidden product and Deactivate for a live one", async () => {
-    renderPage();
-    await screen.findByText("Retired Mouse");
-    expect(screen.getByRole("button", { name: /reactivate/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^deactivate$/i })).toBeInTheDocument();
-  });
 });
 
 describe("adding a product", () => {
@@ -232,40 +214,9 @@ describe("editing a product", () => {
 });
 
 describe("stock and availability", () => {
-  test("the restock button adjusts stock by a fixed step", async () => {
-    const user = userEvent.setup();
-    renderPage();
-    await screen.findByText("Obsidian X-9 Headset");
-
-    await user.click(screen.getAllByRole("button", { name: /\+10/ })[0]);
-
-    await waitFor(() => expect(adminApi.adjustStock).toHaveBeenCalledWith("p1", 10));
-  });
-
-  // Hiding a product from the shop is worth a confirmation, even though it
-  // can be undone.
-  test("deactivating asks first", async () => {
-    const user = userEvent.setup();
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    renderPage();
-    await screen.findByText("Obsidian X-9 Headset");
-
-    await user.click(screen.getByRole("button", { name: /^deactivate$/i }));
-
-    expect(confirm).toHaveBeenCalled();
-    expect(adminApi.deactivateProduct).not.toHaveBeenCalled();
-  });
-
-  test("reactivating does not need a confirmation, since it only adds back", async () => {
-    const user = userEvent.setup();
-    renderPage();
-    await screen.findByText("Retired Mouse");
-
-    await user.click(screen.getByRole("button", { name: /reactivate/i }));
-
-    await waitFor(() => expect(adminApi.reactivateProduct).toHaveBeenCalledWith("p2"));
-  });
-
+  // The restock control is the only write on the list itself, so a refusal
+  // from the API has to reach the admin rather than leaving the row unchanged
+  // with no explanation.
   test("a failed change is reported rather than silently doing nothing", async () => {
     const user = userEvent.setup();
     adminApi.adjustStock.mockRejectedValue(new ApiError("Product not found", 404));

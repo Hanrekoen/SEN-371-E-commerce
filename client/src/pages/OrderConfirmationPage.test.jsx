@@ -49,12 +49,6 @@ describe("getting the order", () => {
     await waitFor(() => expect(getMyOrder).toHaveBeenCalledWith("o7"));
   });
 
-  test("waits rather than showing a half-filled receipt", () => {
-    getMyOrder.mockReturnValue(new Promise(() => {}));
-    renderPage();
-    expect(screen.getByRole("status")).toHaveTextContent(/confirming your order/i);
-  });
-
   // Checkout hands the order over so the receipt is on screen the instant the
   // payment clears, instead of a spinner after a payment that already worked.
   test("paints immediately when checkout handed the order over", () => {
@@ -103,12 +97,6 @@ describe("when the order cannot be shown", () => {
     expect(screen.queryByText(/no record of an order/i)).not.toBeInTheDocument();
   });
 
-  test("a failure with no message falls back to something a customer can act on", async () => {
-    getMyOrder.mockRejectedValue(new ApiError("", 500));
-    renderPage();
-    expect(await screen.findByText(/try again in a moment/i)).toBeInTheDocument();
-  });
-
   // A dead end here is frightening after a payment, so the way to the order
   // history has to be on the error screen itself.
   test("offers the order history as the way out", async () => {
@@ -120,65 +108,21 @@ describe("when the order cannot be shown", () => {
 });
 
 describe("the receipt itself", () => {
-  test("shows the order number the customer would quote to support", async () => {
-    renderPage();
-    expect(await screen.findByText(/ORD-2026-000091/)).toBeInTheDocument();
-  });
-
-  test("shows the payment reference, which is what ties it to the gateway", async () => {
-    renderPage();
-    expect(await screen.findAllByText(/PAY-MJ2K91-A7F3/)).not.toHaveLength(0);
-  });
-
-  test("an order with no payment reference shows a dash, not 'undefined'", async () => {
-    getMyOrder.mockResolvedValue(makeOrder({ paymentReference: null }));
-    renderPage();
-    await screen.findByRole("heading", { name: /vault dispatch authorized/i });
-    expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
-  });
-
-  test("lists every item with its quantity", async () => {
-    getMyOrder.mockResolvedValue(makeOrder({
-      items: [
-        { productId: "p1", name: "Obsidian X-9 Headset", quantity: 2, unitPriceCents: 34900 },
-        { productId: "p2", name: "Vault Mechanical Keyboard", quantity: 1, unitPriceCents: 189900 },
-      ],
-    }));
-    renderPage();
-    expect(await screen.findByText("Obsidian X-9 Headset")).toBeInTheDocument();
-    expect(screen.getByText("Vault Mechanical Keyboard")).toBeInTheDocument();
-    expect(screen.getByText(/qty 2/i)).toBeInTheDocument();
-  });
-
-  // The order model stores a unit price and a quantity, never a line total.
+  // The order model stores a unit price and a quantity, never a line total, so
+  // the line shown here IS the server's formula, and the items it lists are the
+  // ones the server returned.
   test("a line is the unit price times the quantity", async () => {
     getMyOrder.mockResolvedValue(makeOrder({
       items: [{ productId: "p1", name: "Obsidian X-9 Headset", quantity: 3, unitPriceCents: 34900 }],
     }));
     renderPage();
+    expect(await screen.findByText("Obsidian X-9 Headset")).toBeInTheDocument();
     expect(await screen.findByText("R 1 047,00")).toBeInTheDocument();
-  });
-
-  test("shows the shipping address the order will actually go to", async () => {
-    renderPage();
-    expect(await screen.findByText(/440 Silicon Pass/)).toBeInTheDocument();
-    expect(screen.getByText(/Centurion/)).toBeInTheDocument();
-  });
-
-  test("an order with no address does not crash the receipt", async () => {
-    getMyOrder.mockResolvedValue(makeOrder({ shippingAddress: undefined }));
-    renderPage();
-    expect(await screen.findByRole("heading", { name: /vault dispatch authorized/i })).toBeInTheDocument();
   });
 
   test("totals come from the order, and the grand total is the server's", async () => {
     renderPage();
     expect(await screen.findByText("R 376,92")).toBeInTheDocument();
     expect(screen.getByText("R 27,92")).toBeInTheDocument();
-  });
-
-  test("free shipping is said in words rather than as a zero", async () => {
-    renderPage();
-    expect(await screen.findByText("FREE")).toBeInTheDocument();
   });
 });

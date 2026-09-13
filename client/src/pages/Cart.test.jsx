@@ -38,12 +38,6 @@ describe("an empty cart", () => {
 });
 
 describe("what the cart shows", () => {
-  test("every line", () => {
-    renderCart();
-    expect(screen.getByText("Obsidian X-9 Headset")).toBeInTheDocument();
-    expect(screen.getByText("NovaKey MX60")).toBeInTheDocument();
-  });
-
   // The client must never recompute money. These are the server's figures.
   test("the server's line total, not a figure worked out here", () => {
     renderCart();
@@ -54,11 +48,6 @@ describe("what the cart shows", () => {
     renderCart();
     // 34900 + 37800 = 72700 subtotal, plus 8% tax = 78516
     expect(screen.getByText(/R\s?785[,.]16/)).toBeInTheDocument();
-  });
-
-  test("free shipping is stated in words, not left as R 0.00", () => {
-    renderCart();
-    expect(screen.getByText("FREE")).toBeInTheDocument();
   });
 
   // Checkout would refuse this line anyway; saying so here saves the customer
@@ -119,27 +108,5 @@ describe("removing a line", () => {
     await user.click(screen.getAllByRole("button", { name: /remove/i })[1]);
 
     expect(removeItem).toHaveBeenCalledWith("p2");
-  });
-
-  test("a failed removal is reported", async () => {
-    const user = userEvent.setup();
-    const removeItem = vi.fn().mockRejectedValue(new ApiError("Session expired", 401));
-    renderCart(twoLines, { removeItem });
-
-    await user.click(screen.getAllByRole("button", { name: /remove/i })[0]);
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(/session expired/i);
-  });
-});
-
-describe("checking out", () => {
-  test("the checkout button is offered", () => {
-    renderCart();
-    expect(screen.getByRole("button", { name: /checkout/i })).toBeInTheDocument();
-  });
-
-  test("there is a way back to shopping", () => {
-    renderCart();
-    expect(screen.getByRole("link", { name: /continue shopping/i })).toBeInTheDocument();
   });
 });

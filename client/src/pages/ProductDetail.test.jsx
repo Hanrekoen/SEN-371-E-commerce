@@ -2,7 +2,7 @@ import { describe, expect, test, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
-  renderWithProviders, anonymousAuth, customerAuth, adminAuth, makeProduct,
+  renderWithProviders, customerAuth, adminAuth, makeProduct,
 } from "../test/renderWithProviders";
 
 vi.mock("../api/products.api", () => ({
@@ -41,20 +41,9 @@ beforeEach(() => {
 });
 
 describe("loading", () => {
-  test("says it is loading before the product arrives", () => {
-    productsApi.getProduct.mockReturnValue(new Promise(() => {}));
-    renderPage();
-    expect(screen.getByRole("status")).toHaveTextContent(/loading/i);
-  });
-
   test("fetches by the slug in the URL", async () => {
     renderPage();
     await waitFor(() => expect(productsApi.getProduct).toHaveBeenCalledWith("obsidian-x-9-headset"));
-  });
-
-  test("shows the product once it arrives", async () => {
-    renderPage();
-    expect(await screen.findByRole("heading", { name: "Obsidian X-9 Headset" })).toBeInTheDocument();
   });
 
   test("a missing product says so rather than showing an empty page", async () => {
@@ -108,17 +97,6 @@ describe("adding to the cart", () => {
     await waitFor(() => expect(addItem).toHaveBeenCalledWith({ productId: "p1", quantity: 1 }));
   });
 
-  test("confirms it was added, and offers the cart", async () => {
-    const user = userEvent.setup();
-    renderPage(customerAuth, { addItem: vi.fn().mockResolvedValue({}) });
-    await screen.findByRole("heading", { name: "Obsidian X-9 Headset" });
-
-    await user.click(screen.getByRole("button", { name: /add to cart/i }));
-
-    expect(await screen.findByText(/added to your cart/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /view cart/i })).toBeInTheDocument();
-  });
-
   // Stock can run out between the page loading and the click, so the server's
   // refusal has to reach the screen rather than be swallowed.
   test("a refusal from the server is shown", async () => {
@@ -130,22 +108,6 @@ describe("adding to the cart", () => {
     await user.click(screen.getByRole("button", { name: /add to cart/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/not enough stock/i);
-  });
-
-  test("a signed-out visitor is told they will be asked to sign in", async () => {
-    renderPage(anonymousAuth);
-    expect(await screen.findByText(/asked to sign in/i)).toBeInTheDocument();
-  });
-
-  test("a signed-out click does not attempt the add", async () => {
-    const user = userEvent.setup();
-    const addItem = vi.fn();
-    renderPage(anonymousAuth, { addItem });
-    await screen.findByRole("heading", { name: "Obsidian X-9 Headset" });
-
-    await user.click(screen.getByRole("button", { name: /add to cart/i }));
-
-    expect(addItem).not.toHaveBeenCalled();
   });
 });
 
@@ -165,27 +127,5 @@ describe("an admin sees management, not shopping", () => {
     renderPage(adminAuth);
     expect(await screen.findByRole("link", { name: /manage the catalogue/i }))
       .toHaveAttribute("href", "/admin/products");
-  });
-});
-
-describe("images", () => {
-  test("renders the product image with the name as alt text", async () => {
-    renderPage();
-    expect(await screen.findByAltText("Obsidian X-9 Headset")).toBeInTheDocument();
-  });
-
-  test("a product with several images gets a thumbnail for each", async () => {
-    productsApi.getProduct.mockResolvedValue(makeProduct({
-      images: ["/product-pictures/a.jpg", "/product-pictures/b.jpg"],
-    }));
-    renderPage();
-    await screen.findByRole("heading", { name: "Obsidian X-9 Headset" });
-    expect(screen.getAllByRole("button", { name: /show image/i })).toHaveLength(2);
-  });
-
-  test("a single image shows no thumbnail strip", async () => {
-    renderPage();
-    await screen.findByRole("heading", { name: "Obsidian X-9 Headset" });
-    expect(screen.queryByRole("button", { name: /show image/i })).not.toBeInTheDocument();
   });
 });

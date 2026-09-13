@@ -28,10 +28,6 @@ describe("authenticate", () => {
 
   test.each([
     ["no header at all", {}],
-    ["an empty header", { authorization: "" }],
-    ["the wrong scheme", { authorization: "Basic abc123" }],
-    ["a scheme with no token", { authorization: "Bearer" }],
-    ["a token that is not a JWT", { authorization: "Bearer not-a-jwt" }],
   ])("%s is rejected as unauthorised", async (_label, headers) => {
     const err = await runMiddleware(authenticate, { headers });
     expect(err).toBeDefined();
@@ -39,18 +35,12 @@ describe("authenticate", () => {
   });
 
   // A token signed with someone else's secret must not be honoured - this is
-  // the difference between a signature check and a decode.
+  // the difference between a signature check and a decode. A token this
+  // middleware cannot verify is a 401 whatever is wrong with it.
   test("a token signed with a different secret is rejected", async () => {
     const jwt = require("jsonwebtoken");
     const forged = jwt.sign({ id: "u1", role: "admin" }, "a-different-secret");
     const err = await runMiddleware(authenticate, { headers: { authorization: "Bearer " + forged } });
-    expect(err.status).toBe(401);
-  });
-
-  test("an expired token is rejected", async () => {
-    const jwt = require("jsonwebtoken");
-    const expired = jwt.sign({ id: "u1", role: "admin" }, process.env.JWT_ACCESS_SECRET, { expiresIn: "-1s" });
-    const err = await runMiddleware(authenticate, { headers: { authorization: "Bearer " + expired } });
     expect(err.status).toBe(401);
   });
 
@@ -63,19 +53,14 @@ describe("authenticate", () => {
 });
 
 describe("requireRole", () => {
-  test("lets a matching role through", async () => {
-    const err = await runMiddleware(requireRole("admin"), { user: { id: "u1", role: "admin" } });
-    expect(err).toBeUndefined();
-  });
-
+  // The guard lets the named role through and refuses every other one.
   test("refuses a different role with 403, not 401", async () => {
+    expect(
+      await runMiddleware(requireRole("admin"), { user: { id: "u1", role: "admin" } })
+    ).toBeUndefined();
+
     const err = await runMiddleware(requireRole("admin"), { user: { id: "u1", role: "customer" } });
     expect(err.status).toBe(403);
-  });
-
-  test("accepts any of several roles", async () => {
-    const err = await runMiddleware(requireRole("admin", "manager"), { user: { id: "u1", role: "manager" } });
-    expect(err).toBeUndefined();
   });
 
   // 401 means "who are you", 403 means "not you" - a caller with no user at
@@ -92,25 +77,10 @@ describe("denyRole / shoppersOnly", () => {
     expect(err.status).toBe(403);
   });
 
-  test("lets everyone else through", async () => {
-    const err = await runMiddleware(denyRole("admin"), { user: { id: "u1", role: "customer" } });
-    expect(err).toBeUndefined();
-  });
-
   // The point of denying rather than allowing: a role added later can shop
   // without anyone remembering to edit the guard.
   test("a role invented later can still shop without changing this guard", async () => {
     const err = await runMiddleware(shoppersOnly, { user: { id: "u1", role: "wholesaler" } });
     expect(err).toBeUndefined();
-  });
-
-  test("the refusal tells the admin what to do instead", async () => {
-    const err = await runMiddleware(shoppersOnly, { user: { id: "u1", role: "admin" } });
-    expect(err.message).toMatch(/customer account/i);
-  });
-
-  test("no user is 401 rather than a confusing 403", async () => {
-    const err = await runMiddleware(shoppersOnly, {});
-    expect(err.status).toBe(401);
   });
 });

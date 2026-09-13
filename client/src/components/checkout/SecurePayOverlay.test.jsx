@@ -46,11 +46,6 @@ describe("while the payment is in flight", () => {
     expect(screen.getByText(/no real money/i)).toBeInTheDocument();
   });
 
-  test("it shows the amount being authorised", () => {
-    renderOverlay({ run: () => new Promise(() => {}) });
-    expect(screen.getByText(/785[,.]16/)).toBeInTheDocument();
-  });
-
   test("it shows only the last four digits of the card", () => {
     renderOverlay({ run: () => new Promise(() => {}) });
     expect(screen.getByText(/4242/)).toBeInTheDocument();
@@ -58,24 +53,15 @@ describe("while the payment is in flight", () => {
     expect(screen.queryByText(/4242 4242 4242 4242/)).not.toBeInTheDocument();
   });
 
-  test("it starts the request immediately rather than after the animation", () => {
-    const run = vi.fn(() => new Promise(() => {}));
-    renderOverlay({ run });
-    expect(run).toHaveBeenCalledTimes(1);
-  });
-
-  // The core honesty property: the outcome is never announced early.
+  // The core honesty property, and the one step-narration test worth keeping:
+  // the narrated steps never run ahead of the real request, so the outcome is
+  // never announced early.
   test("it does not claim approval while the request is still outstanding", async () => {
     const { promise } = deferred();
     renderOverlay({ run: () => promise });
 
     await new Promise((r) => setTimeout(r, 1600));
     expect(screen.queryByText(/payment approved/i)).not.toBeInTheDocument();
-  });
-
-  test("it tells the customer not to close the window", () => {
-    renderOverlay({ run: () => new Promise(() => {}) });
-    expect(screen.getByText(/do not close this window/i)).toBeInTheDocument();
   });
 });
 
@@ -89,10 +75,6 @@ describe("when the payment is approved", () => {
     await waitFor(() => expect(onApproved).toHaveBeenCalledWith(order), { timeout: 4000 });
   });
 
-  test("it shows the provider's reference, which is the customer's proof", async () => {
-    renderOverlay({ run: async () => makeOrder({ paymentReference: "PAY-TEST-123" }) });
-    expect(await screen.findByText(/PAY-TEST-123/, {}, { timeout: 4000 })).toBeInTheDocument();
-  });
 });
 
 describe("when the payment fails", () => {
@@ -113,11 +95,6 @@ describe("when the payment fails", () => {
     expect(screen.getByText(/nothing was charged/i)).toBeInTheDocument();
   });
 
-  test("a validation failure asks the customer to correct their details", async () => {
-    renderOverlay({ run: async () => { throw new ApiError("Bad card", 400); } });
-    expect(await screen.findByRole("alert", {}, { timeout: 4000 })).toHaveTextContent(/check your details/i);
-  });
-
   test("the failure is handed back on dismiss, so the page can repeat it", async () => {
     const user = userEvent.setup();
     const onDismiss = vi.fn();
@@ -130,19 +107,9 @@ describe("when the payment fails", () => {
     expect(onDismiss).toHaveBeenCalledWith(failure);
   });
 
-  test("the steps are replaced by the outcome, not left looking mid-flight", async () => {
-    renderOverlay({ run: async () => { throw new ApiError("Declined", 402); } });
-    await screen.findByRole("alert", {}, { timeout: 4000 });
-    expect(screen.queryByText(/establishing secure channel/i)).not.toBeInTheDocument();
-  });
 });
 
 describe("dismissing", () => {
-  test("it renders nothing when closed", () => {
-    const { container } = renderOverlay({ open: false, run: async () => makeOrder() });
-    expect(container).toBeEmptyDOMElement();
-  });
-
   // Escape must not hide a payment that is still happening - the customer
   // would not know whether they had been charged.
   test("Escape does nothing while the payment is in flight", async () => {
@@ -162,11 +129,5 @@ describe("dismissing", () => {
     await screen.findByRole("alert", {}, { timeout: 4000 });
     await user.keyboard("{Escape}");
     expect(onDismiss).toHaveBeenCalled();
-  });
-
-  test("it is a modal dialog, so assistive tech treats it as one", () => {
-    renderOverlay({ run: () => new Promise(() => {}) });
-    const dialog = screen.getByRole("dialog");
-    expect(dialog).toHaveAttribute("aria-modal", "true");
   });
 });

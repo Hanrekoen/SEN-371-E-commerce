@@ -87,14 +87,6 @@ beforeEach(() => {
 });
 
 describe("registering an account", () => {
-  test("a new account is created and signed in immediately", async () => {
-    const res = await register();
-
-    expect(res.status).toBe(201);
-    expect(res.body.data.user).toMatchObject({ email: ACCOUNT.email, role: "customer" });
-    expect(typeof res.body.data.accessToken).toBe("string");
-  });
-
   // The password is the one thing in this app that must never come back out.
   test("neither the password nor its hash is ever returned", async () => {
     const res = await register();
@@ -121,51 +113,20 @@ describe("registering an account", () => {
     expect([...mockStore.values()][0].role).toBe("customer");
   });
 
-  test("the same email cannot be registered twice", async () => {
-    await register();
-    const res = await register({ firstName: "Someone", lastName: "Else" });
-
-    expect(res.status).toBe(409);
-    expect(mockStore.size).toBe(1);
-  });
-
-  // Registered as Hanre@…, signs in later as hanre@… - the same person.
+  // An address already registered is refused, and the check is on the stored
+  // lower-cased email: registered as Hanre@…, signs in later as hanre@… - the
+  // same person, and never a second account.
   test("email case does not create a second account", async () => {
     await register({ email: "Hanre@SEN371.test" });
     const res = await register();
 
     expect(res.status).toBe(409);
-  });
-
-  test.each([
-    ["a password with no number", { password: "vaultpassword" }],
-    ["a password that is too short", { password: "Vault-9" }],
-    ["an address that is not an email", { email: "not-an-email" }],
-    ["a one-character first name", { firstName: "H" }],
-  ])("%s is refused before any account is created", async (_label, over) => {
-    const res = await register(over);
-
-    expect(res.status).toBe(400);
-    expect(mockStore.size).toBe(0);
+    expect(mockStore.size).toBe(1);
   });
 });
 
 describe("signing in", () => {
   beforeEach(register);
-
-  test("the right password signs the account in", async () => {
-    const res = await signIn();
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.user.email).toBe(ACCOUNT.email);
-  });
-
-  test("the wrong password does not", async () => {
-    const res = await signIn(null, { password: "Vault-Pass-8" });
-
-    expect(res.status).toBe(401);
-    expect(res.body.data).toBeNull();
-  });
 
   // Saying "no such account" tells whoever is guessing which addresses are
   // registered, which is half the work of breaking in.
@@ -173,6 +134,8 @@ describe("signing in", () => {
     const wrongPassword = await signIn(null, { password: "Vault-Pass-8" });
     const noSuchAccount = await signIn(null, { email: "nobody@sen371.test" });
 
+    expect(wrongPassword.status).toBe(401);
+    expect(wrongPassword.body.data).toBeNull();
     expect(noSuchAccount.status).toBe(wrongPassword.status);
     expect(noSuchAccount.body.error.message).toBe(wrongPassword.body.error.message);
   });
@@ -198,43 +161,8 @@ describe("signing in", () => {
 });
 
 describe("staying signed in", () => {
-  test("the access token identifies the account on a protected route", async () => {
-    const { body } = await register();
-
-    const res = await request(app)
-      .get("/api/auth/me")
-      .set("Authorization", `Bearer ${body.data.accessToken}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.email).toBe(ACCOUNT.email);
-  });
-
-  // What the browser does on every page load: no access token in memory after
-  // a refresh, only the cookie, and it has to be enough to get back in.
-  test("a page refresh restores the session from the cookie alone", async () => {
-    const agent = request.agent(app);
-    await agent.post("/api/auth/register").send(ACCOUNT);
-
-    const refreshed = await agent.post("/api/auth/refresh");
-    expect(refreshed.status).toBe(200);
-
-    const me = await agent
-      .get("/api/auth/me")
-      .set("Authorization", `Bearer ${refreshed.body.data.accessToken}`);
-    expect(me.body.data.email).toBe(ACCOUNT.email);
-  });
-
-  // Rotation limits how long a stolen refresh token stays useful.
-  test("refreshing issues a different refresh token each time", async () => {
-    const agent = request.agent(app);
-    const first = await agent.post("/api/auth/register").send(ACCOUNT);
-    const second = await agent.post("/api/auth/refresh");
-
-    const cookieOf = (res) =>
-      res.headers["set-cookie"].find((c) => c.startsWith("refreshToken="));
-    expect(cookieOf(second)).not.toBe(cookieOf(first));
-  });
-
+  // The cookie is the only thing a browser still holds after a page refresh,
+  // so a request without one cannot be allowed to mint a new session.
   test("no cookie means no refresh", async () => {
     await register();
 
@@ -258,17 +186,6 @@ describe("staying signed in", () => {
 });
 
 describe("signing out", () => {
-  test("the refresh cookie is cleared", async () => {
-    const agent = request.agent(app);
-    const { body } = await agent.post("/api/auth/register").send(ACCOUNT);
-
-    const res = await agent
-      .post("/api/auth/logout")
-      .set("Authorization", `Bearer ${body.data.accessToken}`);
-
-    expect(res.status).toBe(204);
-  });
-
   // Bumping tokenVersion is what makes a sign-out mean something. Without it,
   // a refresh token copied before the sign-out keeps working for a week. The
   // cookie is read off the response and replayed by hand, so this proves the

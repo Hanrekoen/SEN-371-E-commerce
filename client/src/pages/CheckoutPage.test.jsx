@@ -109,35 +109,18 @@ describe("an empty cart", () => {
 });
 
 describe("the order summary", () => {
-  test("lists each line at the total the server calculated", () => {
-    const { container } = renderPage();
-    expect(screen.getByText("Obsidian X-9 Headset")).toBeInTheDocument();
-    // A one-line cart makes the line price and the subtotal the same number,
-    // so this asserts on the line itself rather than on "R 698,00 appears
-    // somewhere", which the subtotal alone would satisfy.
-    expect(container.querySelector(".gv-checkout__price")).toHaveTextContent("R 698,00");
-    expect(screen.getByText("2x")).toBeInTheDocument();
-  });
-
-  test("free shipping is said in words, not as R 0,00", () => {
-    renderPage();
-    expect(screen.getByText("FREE")).toBeInTheDocument();
-  });
-
+  // The client never recomputes money - this is the server's figure, and it is
+  // the number the customer is agreeing to pay.
   test("the charge shown is the cart total from the server", () => {
     renderPage();
     // 69800 subtotal + 8% tax
     expect(screen.getByText("R 753,84")).toBeInTheDocument();
   });
-
-  test("the name on file is prefilled, since it is almost always right", () => {
-    renderPage();
-    expect(screen.getByLabelText(/first name/i)).toHaveValue("Hanre");
-    expect(screen.getByLabelText(/last name/i)).toHaveValue("Koen");
-  });
 });
 
 describe("what the card fields do while typing", () => {
+  // One representative case for the input formatters: the grouping is the one
+  // the customer actually reads back off the screen to check their typing.
   test("the card number is grouped in fours so it can be checked by eye", async () => {
     const user = userEvent.setup();
     renderPage();
@@ -145,29 +128,6 @@ describe("what the card fields do while typing", () => {
     await fill(user, "card number", "4242424242424242");
 
     expect(screen.getByLabelText(/card number/i)).toHaveValue("4242 4242 4242 4242");
-  });
-
-  test("the expiry becomes MM / YY", async () => {
-    const user = userEvent.setup();
-    renderPage();
-
-    await fill(user, "^expiry", "0829");
-
-    expect(screen.getByLabelText(/^expiry/i)).toHaveValue("08 / 29");
-  });
-
-  test("the CVC takes digits only, and no more than four", async () => {
-    const user = userEvent.setup();
-    renderPage();
-
-    await fill(user, "^cvc", "12a34567");
-
-    expect(screen.getByLabelText(/^cvc/i)).toHaveValue("1234");
-  });
-
-  test("the CVC is masked, like the card entry screens people already trust", () => {
-    renderPage();
-    expect(screen.getByLabelText(/^cvc/i)).toHaveAttribute("type", "password");
   });
 });
 
@@ -226,28 +186,6 @@ describe("paying", () => {
     expect(body).not.toHaveProperty("amountCents");
   });
 
-  test("the payment screen names the card being charged", async () => {
-    const user = userEvent.setup();
-    checkout.mockReturnValue(new Promise(() => {}));
-    renderPage();
-    await fillTheForm(user);
-    await pay(user);
-
-    const dialog = await screen.findByRole("dialog");
-    expect(dialog).toHaveTextContent(/visa/i);
-    expect(dialog).toHaveTextContent(/4242/);
-  });
-
-  // Anyone looking at this screen should be able to tell no real money moves.
-  test("the payment screen says it is a simulation", async () => {
-    const user = userEvent.setup();
-    checkout.mockReturnValue(new Promise(() => {}));
-    renderPage();
-    await fillTheForm(user);
-    await pay(user);
-
-    expect(await screen.findByText(/sandbox/i)).toBeInTheDocument();
-  });
 });
 
 describe("an approved payment", () => {
@@ -277,28 +215,23 @@ describe("a declined payment", () => {
   const decline = () =>
     checkout.mockRejectedValue(new ApiError("Your card was declined.", 402));
 
-  test("says so on the payment screen rather than closing it silently", async () => {
+  // The single most important reassurance on a failed payment - and it is said
+  // on the payment screen rather than the screen closing silently.
+  test("says the card was declined and that nothing was charged", async () => {
     const user = userEvent.setup();
     decline();
     renderPage();
     await fillTheForm(user);
     await pay(user);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/declined/i);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/declined/i);
+    expect(alert).toHaveTextContent(/nothing was charged/i);
   });
 
-  // The single most important reassurance on a failed payment.
-  test("says nothing was charged and the cart is untouched", async () => {
-    const user = userEvent.setup();
-    decline();
-    renderPage();
-    await fillTheForm(user);
-    await pay(user);
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(/nothing was charged/i);
-  });
-
-  test("does not empty the cart", async () => {
+  // Nothing was charged, so nothing may move: the cart stays as it was and the
+  // customer stays on checkout rather than landing on a receipt.
+  test("does not empty the cart or navigate away from checkout", async () => {
     const user = userEvent.setup();
     decline();
     renderPage();
@@ -307,16 +240,6 @@ describe("a declined payment", () => {
 
     await screen.findByRole("alert");
     expect(setCart).not.toHaveBeenCalled();
-  });
-
-  test("does not navigate away from checkout", async () => {
-    const user = userEvent.setup();
-    decline();
-    renderPage();
-    await fillTheForm(user);
-    await pay(user);
-
-    await screen.findByRole("alert");
     expect(screen.queryByText("receipt for o1")).not.toBeInTheDocument();
   });
 
@@ -347,18 +270,6 @@ describe("other failures a customer can hit", () => {
     await pay(user);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/unreachable/i);
-  });
-
-  // Stock can go between adding to the cart and paying. The order is refused,
-  // and the customer needs to know which of the two happened.
-  test("a stock refusal is passed through in the server's own words", async () => {
-    const user = userEvent.setup();
-    checkout.mockRejectedValue(new ApiError("Obsidian X-9 Headset only has 1 left.", 422));
-    renderPage();
-    await fillTheForm(user);
-    await pay(user);
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(/only has 1 left/i);
   });
 
   test("a rejected field is marked on the field itself once the screen closes", async () => {

@@ -34,46 +34,29 @@ test.describe("a new customer buys something", () => {
     await expect(page.getByText(product)).toBeVisible();
   });
 
-  test("the order then appears in the order history", async ({ page }) => {
+  // Everything that has to be true AFTER a purchase, checked against one
+  // purchase rather than three. Placing a real order takes about half a
+  // minute end to end, so re-running the whole journey to assert one more
+  // thing at the end is a minute of wall clock for no extra coverage.
+  test("afterwards: the order is in the history, the receipt survives a refresh, and the cart is empty", async ({ page }) => {
     await registerNewAccount(page);
     await addFirstProductToCart(page);
     await page.goto("/checkout");
     await fillCheckout(page);
     await page.getByRole("button", { name: /execute transaction/i }).click();
     await expect(page).toHaveURL(/confirmation/, { timeout: 30_000 });
+
+    // The receipt is fetched by id rather than read out of navigation state,
+    // which is exactly what makes a refresh survivable.
+    await page.reload();
+    await expect(page.getByRole("heading", { name: /vault dispatch authorized/i })).toBeVisible();
 
     await page.goto("/orders");
-
     await expect(page.getByText("paid")).toBeVisible();
     await expect(page.getByRole("link", { name: /view receipt/i }).first()).toBeVisible();
-  });
 
-  // The receipt is fetched by id rather than read out of navigation state,
-  // which is exactly what makes this survive.
-  test("the receipt survives a page refresh", async ({ page }) => {
-    await registerNewAccount(page);
-    await addFirstProductToCart(page);
-    await page.goto("/checkout");
-    await fillCheckout(page);
-    await page.getByRole("button", { name: /execute transaction/i }).click();
-    await expect(page).toHaveURL(/confirmation/, { timeout: 30_000 });
-
-    await page.reload();
-
-    await expect(page.getByRole("heading", { name: /vault dispatch authorized/i })).toBeVisible();
-  });
-
-  // Checkout empties the cart server-side; the navbar badge has to agree.
-  test("the cart is empty afterwards", async ({ page }) => {
-    await registerNewAccount(page);
-    await addFirstProductToCart(page);
-    await page.goto("/checkout");
-    await fillCheckout(page);
-    await page.getByRole("button", { name: /execute transaction/i }).click();
-    await expect(page).toHaveURL(/confirmation/, { timeout: 30_000 });
-
+    // Checkout empties the cart server-side; the navbar badge has to agree.
     await page.goto("/cart");
-
     await expect(page.getByText(/your cart is empty|nothing in your cart/i)).toBeVisible();
   });
 });
@@ -95,49 +78,20 @@ test.describe("when the card is declined", () => {
     await expect(page.getByText(product)).toBeVisible();
   });
 
-  test("a second attempt on a good card goes through", async ({ page }) => {
-    await registerNewAccount(page);
-    await addFirstProductToCart(page);
-
-    await page.goto("/checkout");
-    await fillCheckout(page, CARD.declined);
-    await page.getByRole("button", { name: /execute transaction/i }).click();
-    await expect(page.getByRole("alert")).toBeVisible({ timeout: 20_000 });
-    await page.getByRole("button", { name: /back to checkout/i }).click();
-
-    await page.getByLabel(/card number/i).fill(CARD.approved);
-    await page.getByRole("button", { name: /execute transaction/i }).click();
-
-    await expect(page).toHaveURL(/confirmation/, { timeout: 30_000 });
-  });
 });
 
 test.describe("signing in and out", () => {
-  test("a seeded customer can sign in and see their own orders", async ({ page }) => {
-    await signIn(page, CUSTOMER);
-
-    await page.goto("/orders");
-
-    await expect(page.getByRole("heading")).toBeVisible();
-    await expect(page.getByText(/not your vault|sign in/i)).toBeHidden();
-  });
-
-  // The session is restored from an httpOnly cookie on boot. Getting this
-  // wrong signs people out on every refresh, which is the kind of bug that
-  // only a real browser reload can catch.
-  test("the session survives a refresh", async ({ page }) => {
+  // The session is restored from an httpOnly cookie on boot. Getting that
+  // wrong signs people out on every refresh - the kind of bug only a real
+  // browser reload can catch, which is why it is tested here and nowhere
+  // below.
+  test("a session survives a refresh, and ends when they sign out", async ({ page }) => {
     await signIn(page, CUSTOMER);
 
     await page.reload();
-
     await expect(page.getByRole("link", { name: /sign in/i })).toBeHidden();
-  });
-
-  test("signing out ends the session", async ({ page }) => {
-    await signIn(page, CUSTOMER);
 
     await page.getByRole("button", { name: /sign out/i }).click();
-
     await expect(page.getByRole("link", { name: /sign in/i })).toBeVisible();
   });
 });

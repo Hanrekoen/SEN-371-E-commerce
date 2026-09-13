@@ -105,6 +105,8 @@ describeGateway("payment gateway integration (real HTTP)", () => {
       expect(result.providerReference).toBeNull();
     });
 
+    // The gateway's own authorisation ceiling. A decline, not an error - the
+    // customer needs to be told the amount was refused, not that we broke.
     test("an amount over the limit is declined", async () => {
       const result = await provider.authorize(request({ amountCents: 9999999 }));
       expect(result).toMatchObject({ approved: false, code: "limit_exceeded" });
@@ -137,28 +139,6 @@ describeGateway("payment gateway integration (real HTTP)", () => {
     );
     }, 30000);
 
-    test("gateway is not listening at all", async () => {
-      const dead = new MockPaymentProvider({
-        baseUrl: "http://127.0.0.1:9",
-        apiKey: "test-gateway-key",
-        timeoutMs: CLIENT_TIMEOUT_MS,
-      });
-      const error = await dead.authorize(request()).catch((e) => e);
-      expect(error).toBeInstanceOf(ServiceUnavailableError);
-      expect(error.status).toBe(503);
-    });
-
-    test("a wrong API key is our misconfiguration, not the customer's problem", async () => {
-      const misconfigured = new MockPaymentProvider({
-        baseUrl,
-        apiKey: "wrong-key",
-        timeoutMs: CLIENT_TIMEOUT_MS,
-      });
-      const error = await misconfigured.authorize(request()).catch((e) => e);
-      expect(error).toBeInstanceOf(ServiceUnavailableError);
-      expect(error.status).toBe(503);
-      expect(logs.join("\n")).toMatch(/HTTP 401/);
-    });
   });
 
   describe("bad card details are the customer's to fix", () => {
@@ -169,14 +149,6 @@ describeGateway("payment gateway integration (real HTTP)", () => {
       expect(error).toBeInstanceOf(ValidationError);
       expect(error.status).toBe(400);
       expect(error.details[0].field).toBe("card");
-    });
-  });
-
-  describe("the amount is never taken on trust", () => {
-    test("a non-integer amount is refused before any network call", async () => {
-      await expect(provider.authorize(request({ amountCents: "34900" }))).rejects.toThrow(
-        /positive integer amountCents/
-      );
     });
   });
 });

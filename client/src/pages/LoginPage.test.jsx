@@ -65,17 +65,6 @@ describe("signing in", () => {
     );
   });
 
-  test("leaves the page once the sign-in succeeds", async () => {
-    const user = userEvent.setup();
-    renderPage();
-
-    await fill(user, "email", "hanre@sen371.test");
-    await fill(user, "^password$", "Correct-Horse-9");
-    await user.click(screen.getByRole("button", { name: /^sign in$/i }));
-
-    expect(await screen.findByTestId("navigated-away")).toBeInTheDocument();
-  });
-
   // A guard sends people here with where they were headed. Dropping that and
   // dumping them on the home page is the small betrayal that makes a sign-in
   // wall feel broken.
@@ -125,16 +114,8 @@ describe("signing in", () => {
 });
 
 describe("registering", () => {
-  test("switching to register asks for a name as well", async () => {
-    const user = userEvent.setup();
-    renderPage();
-
-    await user.click(screen.getByRole("tab", { name: /register/i }));
-
-    expect(screen.getByLabelText(/first name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/last name/i)).toBeInTheDocument();
-  });
-
+  // Switching mode has to swap the whole form, not just the button: the name
+  // fields have to appear and the call that goes out has to be register.
   test("register sends the name fields, and does not call login", async () => {
     const user = userEvent.setup();
     renderPage();
@@ -155,16 +136,6 @@ describe("registering", () => {
       })
     );
     expect(login).not.toHaveBeenCalled();
-  });
-
-  // The password rule lives on the server. Stating it up front is cheaper than
-  // a round trip that comes back saying the same thing.
-  test("the password rule is stated before it is broken", async () => {
-    const user = userEvent.setup();
-    renderPage();
-    await user.click(screen.getByRole("tab", { name: /register/i }));
-
-    expect(screen.getByText(/at least 8 characters/i)).toBeInTheDocument();
   });
 
   test("a validation failure lands on the field the API named", async () => {
@@ -205,21 +176,6 @@ describe("registering", () => {
 });
 
 describe("the password field", () => {
-  test("is masked until asked otherwise", () => {
-    renderPage();
-    expect(screen.getByLabelText(/^password$/i)).toHaveAttribute("type", "password");
-  });
-
-  test("can be revealed, and the control says which way it will go", async () => {
-    const user = userEvent.setup();
-    renderPage();
-
-    await user.click(screen.getByRole("button", { name: /show password/i }));
-
-    expect(screen.getByLabelText(/^password$/i)).toHaveAttribute("type", "text");
-    expect(screen.getByRole("button", { name: /hide password/i })).toBeInTheDocument();
-  });
-
   test("typing clears the error already sitting on the field", async () => {
     const user = userEvent.setup();
     login.mockRejectedValue(

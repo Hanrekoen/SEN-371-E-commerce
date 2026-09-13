@@ -161,4 +161,4 @@ which is TDD applied to bugs:
 
 In each case the test failed first, for the right reason, and the fix is what
 turned it green. The full list of defects the suites caught is in
-[`TEST_REPORT.md`](./TEST_REPORT.md) §6.
+[`TEST_REPORT.md`](./TEST_REPORT.md) §7.

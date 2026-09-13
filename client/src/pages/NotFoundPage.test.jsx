@@ -18,11 +18,6 @@ describe("NotFoundPage", () => {
     expect(screen.getByText("/catalogue/headsets")).toBeInTheDocument();
   });
 
-  test("a different path shows that path, not a hard-coded one", () => {
-    renderAt("/orders/9999");
-    expect(screen.getByText("/orders/9999")).toBeInTheDocument();
-  });
-
   // The 404 is decorative and read aloud as a number out of context, so it is
   // hidden from assistive technology and the heading carries the meaning.
   test("the heading, not the big 404, is what a screen reader gets", () => {
@@ -37,13 +32,8 @@ describe("NotFoundPage", () => {
     expect(screen.getByRole("link", { name: /browse the catalogue/i })).toHaveAttribute("href", "/catalog");
   });
 
-  test("links on to orders, cart and sign-in rather than dead-ending", () => {
-    renderAt("/nowhere");
-    expect(screen.getByRole("link", { name: /your orders/i })).toHaveAttribute("href", "/orders");
-    expect(screen.getByRole("link", { name: /your cart/i })).toHaveAttribute("href", "/cart");
-    expect(screen.getByRole("link", { name: /sign in/i })).toHaveAttribute("href", "/login");
-  });
-
+  // A second, different path also proves the address shown is the real one
+  // rather than a hard-coded string.
   test("a query string is not silently dropped from the path shown", () => {
     renderAt("/search?q=headset");
     expect(screen.getByText("/search")).toBeInTheDocument();

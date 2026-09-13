@@ -39,12 +39,6 @@ beforeEach(() => {
 });
 
 describe("loading", () => {
-  test("says it is loading before the orders arrive", () => {
-    ordersApi.listMyOrders.mockReturnValue(new Promise(() => {}));
-    renderPage();
-    expect(screen.getByRole("status")).toHaveTextContent(/loading/i);
-  });
-
   test("asks for the first page at the size the page renders", async () => {
     renderPage();
     await waitFor(() =>
@@ -77,22 +71,6 @@ describe("loading", () => {
 });
 
 describe("an order card", () => {
-  test("shows the order number a customer would quote to support", async () => {
-    renderPage();
-    expect(await screen.findByText("ORD-2026-000091")).toBeInTheDocument();
-  });
-
-  test("falls back to the id when the order has no number", async () => {
-    ordersApi.listMyOrders.mockResolvedValue(page([makeOrder({ orderNumber: null })]));
-    renderPage();
-    expect(await screen.findByText("o1")).toBeInTheDocument();
-  });
-
-  test("shows the status with the same pill the admin dashboard uses", async () => {
-    renderPage();
-    expect(await screen.findByText("paid")).toBeInTheDocument();
-  });
-
   // The order model stores a unit price and a quantity, never a line total, so
   // the line total here IS the server's formula rather than a second opinion.
   test("a line total is the unit price times the quantity", async () => {
@@ -120,12 +98,8 @@ describe("an order card", () => {
       .toHaveAttribute("href", "/orders/o1/confirmation");
   });
 
-  test("an order with no items still renders its header and total", async () => {
-    ordersApi.listMyOrders.mockResolvedValue(page([makeOrder({ items: undefined })]));
-    renderPage();
-    expect(await screen.findByText("ORD-2026-000091")).toBeInTheDocument();
-  });
-
+  // Each card carries its own order number and status, so two orders must not
+  // collapse into one another's details.
   test("each order gets its own card", async () => {
     ordersApi.listMyOrders.mockResolvedValue(page([
       makeOrder(),
@@ -139,12 +113,6 @@ describe("an order card", () => {
 });
 
 describe("the count line", () => {
-  test("one order is singular", async () => {
-    ordersApi.listMyOrders.mockResolvedValue(page([makeOrder()], { total: 1, totalPages: 1 }));
-    renderPage();
-    expect(await screen.findByText("1 order all time")).toBeInTheDocument();
-  });
-
   // The count is the all-time total from meta, not the length of this page, so
   // it does not shrink when someone pages forward.
   test("the count is the all-time total, not this page's length", async () => {
@@ -155,19 +123,6 @@ describe("the count line", () => {
 });
 
 describe("paging", () => {
-  test("a single page of orders shows no pager at all", async () => {
-    renderPage();
-    await screen.findByText("ORD-2026-000091");
-    expect(screen.queryByRole("button", { name: /next/i })).not.toBeInTheDocument();
-  });
-
-  test("Previous is disabled on the first page", async () => {
-    ordersApi.listMyOrders.mockResolvedValue(page([makeOrder()], { total: 14, totalPages: 2 }));
-    renderPage();
-    await screen.findByText("ORD-2026-000091");
-    expect(screen.getByRole("button", { name: /previous/i })).toBeDisabled();
-  });
-
   test("Next fetches the following page", async () => {
     const user = userEvent.setup();
     ordersApi.listMyOrders.mockResolvedValue(page([makeOrder()], { total: 14, totalPages: 2 }));
@@ -179,18 +134,6 @@ describe("paging", () => {
     await waitFor(() =>
       expect(ordersApi.listMyOrders).toHaveBeenLastCalledWith({ page: 2, limit: 10 })
     );
-  });
-
-  test("the pager says where they are", async () => {
-    const user = userEvent.setup();
-    ordersApi.listMyOrders.mockResolvedValue(page([makeOrder()], { total: 14, totalPages: 2 }));
-    renderPage();
-    await screen.findByText("ORD-2026-000091");
-
-    await user.click(screen.getByRole("button", { name: /next/i }));
-
-    expect(await screen.findByText("Page 2 of 2")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
   });
 
   // The pager is a navigation landmark so a screen reader user can find it

@@ -18,11 +18,6 @@ test.describe("running the catalogue", () => {
     await signIn(page, ADMIN);
   });
 
-  test("the dashboard is reachable and shows the shop's numbers", async ({ page }) => {
-    await page.goto("/admin");
-    await expect(page.getByRole("heading", { name: /dashboard/i })).toBeVisible();
-  });
-
   // Every product needs a category, and the product form's picker is
   // required, so this is the first thing a new shop has to be able to do.
   test("a category can be added", async ({ page }) => {

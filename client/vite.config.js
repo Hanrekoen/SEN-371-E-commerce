@@ -35,8 +35,8 @@ export default defineConfig({
       // quietly rot. Set just under what the suite actually achieves.
       thresholds: {
         statements: 55,
-        branches: 65,
-        functions: 50,
+        branches: 78,
+        functions: 58,
         lines: 55,
       },
     },

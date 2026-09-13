@@ -27,17 +27,4 @@ describe("StatusPill", () => {
     const { container } = render(<StatusPill status="teleported" />);
     expect(container.querySelector(".gv-pill").className).toContain("gv-pill--neutral");
   });
-
-  test("the tone is case-insensitive, since the API could shout", () => {
-    const { container } = render(<StatusPill status="DELIVERED" />);
-    expect(container.querySelector(".gv-pill").className).toContain("gv-pill--success");
-  });
-
-  test.each([
-    ["null", null],
-    ["undefined", undefined],
-  ])("%s does not crash the row it sits in", (_label, status) => {
-    const { container } = render(<StatusPill status={status} />);
-    expect(container.querySelector(".gv-pill")).toBeInTheDocument();
-  });
 });

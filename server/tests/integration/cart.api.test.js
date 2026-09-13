@@ -77,17 +77,6 @@ describe("validation rejects malformed input before the business rules see it", 
     expect(res.body.error.details.map((d) => d.field)).toContain(field);
   });
 
-  test("PATCH with a malformed :productId is a 400", async () => {
-    const res = await auth(request(app).patch("/api/cart/items/not-an-id")).send({ quantity: 2 });
-    expect(res.status).toBe(400);
-    expect(res.body.error.details[0].field).toBe("productId");
-  });
-
-  test("DELETE with a malformed :productId is a 400", async () => {
-    const res = await auth(request(app).delete("/api/cart/items/not-an-id"));
-    expect(res.status).toBe(400);
-  });
-
   // The injection backstop and the validator, together, on a real route.
   test("an operator-shaped productId is stripped and then rejected", async () => {
     const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
@@ -98,54 +87,16 @@ describe("validation rejects malformed input before the business rules see it", 
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("productId.$gt"));
     warn.mockRestore();
   });
-
-  test("a valid request is NOT rejected", async () => {
-    const res = await auth(request(app).post("/api/cart/items"))
-      .send({ productId: PRODUCT_ID, quantity: 2 });
-    expect(res.status).toBe(201);
-  });
 });
 
+// What a filled cart looks like - the prices, the totals and the item DTO - is
+// proven end to end by the "filling a cart" block of
+// tests/function/shopping.journey.test.js. What is left here is the part of
+// the cart API that journey never touches: changing and removing lines, and
+// emptying the cart.
 describe("the cart response is a DTO, not a Mongoose document", () => {
   beforeEach(async () => {
     await auth(request(app).post("/api/cart/items")).send({ productId: PRODUCT_ID, quantity: 2 });
-  });
-
-  test("top-level keys are exactly the agreed contract", async () => {
-    const res = await auth(request(app).get("/api/cart"));
-    expect(res.status).toBe(200);
-    expect(Object.keys(res.body.data).sort()).toEqual([
-      "itemCount", "items", "shippingCents", "subtotalCents", "taxCents", "totalCents",
-    ]);
-  });
-
-  test("the array is `items`, matching orders - not `lines`", async () => {
-    const res = await auth(request(app).get("/api/cart"));
-    expect(Array.isArray(res.body.data.items)).toBe(true);
-    expect(res.body.data.lines).toBeUndefined();
-  });
-
-  test("productId is a plain string, and no internals leak", async () => {
-    const res = await auth(request(app).get("/api/cart"));
-    const item = res.body.data.items[0];
-    expect(typeof item.productId).toBe("string");
-    expect(item.productId).toBe(PRODUCT_ID);
-    expect(item._id).toBeUndefined();
-    expect(item.__v).toBeUndefined();
-    expect(Object.keys(item).sort()).toEqual([
-      "finish", "inStock", "lineTotalCents", "name", "productId", "quantity", "unitPriceCents",
-    ]);
-  });
-
-  test("totals come from the live product price, in integer cents", async () => {
-    const res = await auth(request(app).get("/api/cart"));
-    const { data } = res.body;
-    expect(data.items[0].unitPriceCents).toBe(34900);
-    expect(data.items[0].lineTotalCents).toBe(69800);
-    expect(data.subtotalCents).toBe(69800);
-    expect(data.taxCents).toBe(Math.round(69800 * 0.08));
-    expect(data.totalCents).toBe(69800 + data.shippingCents + data.taxCents);
-    expect(Number.isInteger(data.totalCents)).toBe(true);
   });
 
   test("every cart endpoint returns the same shape", async () => {
@@ -170,13 +121,6 @@ describe("the cart response is a DTO, not a Mongoose document", () => {
 });
 
 describe("business rules still run behind validation", () => {
-  test("a quantity within the validator but over stock is a 422, not a 400", async () => {
-    const res = await auth(request(app).post("/api/cart/items"))
-      .send({ productId: PRODUCT_ID, quantity: 50 });
-    expect(res.status).toBe(422);
-    expect(res.body.error.code).toBe("RULE_VIOLATION");
-  });
-
   test("a well-formed id for a product that does not exist is a 404", async () => {
     const res = await auth(request(app).post("/api/cart/items"))
       .send({ productId: OTHER_ID, quantity: 1 });

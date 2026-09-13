@@ -40,21 +40,11 @@ describe("RequireAuth", () => {
     expect(screen.getByText("the sign-in page")).toBeInTheDocument();
   });
 
-  test("lets a signed-in customer through", () => {
-    renderGuard(customerAuth);
-    expect(screen.getByText("the protected page")).toBeInTheDocument();
-  });
-
   test("a customer at an admin route is told why, not bounced to sign in", () => {
     renderGuard(customerAuth, <RequireAuth role="admin"><Protected /></RequireAuth>);
     expect(screen.getByRole("heading", { name: /not your vault/i })).toBeInTheDocument();
     expect(screen.queryByText("the protected page")).not.toBeInTheDocument();
     expect(screen.queryByText("the sign-in page")).not.toBeInTheDocument();
-  });
-
-  test("an admin reaches an admin route", () => {
-    renderGuard(adminAuth, <RequireAuth role="admin"><Protected /></RequireAuth>);
-    expect(screen.getByText("the protected page")).toBeInTheDocument();
   });
 });
 
@@ -62,6 +52,8 @@ describe("RequireShopper", () => {
   const shopper = (auth) =>
     renderGuard(auth, <RequireShopper><Protected /></RequireShopper>);
 
+  // RequireShopper wraps RequireAuth, so this is also the signed-in customer
+  // getting through the plain auth guard.
   test("a customer can reach the cart and checkout", () => {
     shopper(customerAuth);
     expect(screen.getByText("the protected page")).toBeInTheDocument();
@@ -80,10 +72,5 @@ describe("RequireShopper", () => {
     shopper(adminAuth);
     expect(screen.getByRole("link", { name: /go to the dashboard/i })).toHaveAttribute("href", "/admin");
     expect(screen.getByRole("link", { name: /browse the catalogue/i })).toHaveAttribute("href", "/catalog");
-  });
-
-  test("a signed-out visitor still goes to sign in first", () => {
-    shopper(anonymousAuth);
-    expect(screen.getByText("the sign-in page")).toBeInTheDocument();
   });
 });

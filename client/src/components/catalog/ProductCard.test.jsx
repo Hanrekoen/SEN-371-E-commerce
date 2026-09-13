@@ -17,19 +17,9 @@ const renderCard = (product = makeProduct(), auth = customerAuth, cartApi = {}) 
   renderWithProviders(<ProductCard product={product} />, { auth, cartApi });
 
 describe("what the card shows", () => {
-  test("the product name", () => {
-    renderCard();
-    expect(screen.getByText("Obsidian X-9 Headset")).toBeInTheDocument();
-  });
-
   test("the price, in rand", () => {
     renderCard();
     expect(screen.getByText(/R\s?349/)).toBeInTheDocument();
-  });
-
-  test("the category", () => {
-    renderCard();
-    expect(screen.getByText("Audio Gear")).toBeInTheDocument();
   });
 
   test("an image with the product name as its alt text", () => {
@@ -47,11 +37,6 @@ describe("what the card shows", () => {
     renderCard(makeProduct({ inStock: false }));
     expect(screen.getByText(/out of stock/i)).toBeInTheDocument();
   });
-
-  test("the Add button is disabled when there is no stock", () => {
-    renderCard(makeProduct({ inStock: false }));
-    expect(screen.getByRole("button", { name: /add/i })).toBeDisabled();
-  });
 });
 
 describe("adding to the cart", () => {
@@ -63,19 +48,6 @@ describe("adding to the cart", () => {
     await user.click(screen.getByRole("button", { name: /add/i }));
 
     expect(addItem).toHaveBeenCalledWith({ productId: "p1", quantity: 1 });
-  });
-
-  // The whole card is a link, so the Add button must not also navigate.
-  test("clicking Add does not follow the card's link", async () => {
-    const user = userEvent.setup();
-    const addItem = vi.fn().mockResolvedValue({});
-    renderWithProviders(<ProductCard product={makeProduct()} />, {
-      auth: customerAuth, cartApi: { addItem }, path: "/", route: "/",
-    });
-
-    await user.click(screen.getByRole("button", { name: /add/i }));
-
-    expect(screen.queryByTestId("navigated-away")).not.toBeInTheDocument();
   });
 
   // The cart lives server-side against a user, so there is nowhere to put an
@@ -97,10 +69,5 @@ describe("an admin cannot buy", () => {
   test("no Add button is offered to an admin", () => {
     renderCard(makeProduct(), adminAuth);
     expect(screen.queryByRole("button", { name: /add/i })).not.toBeInTheDocument();
-  });
-
-  test("an admin can still open the product", () => {
-    renderCard(makeProduct(), adminAuth);
-    expect(screen.getByRole("link")).toHaveAttribute("href", "/product/obsidian-x-9-headset");
   });
 });

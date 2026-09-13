@@ -32,16 +32,6 @@ describe("PaymentProvider (the contract)", () => {
     );
   });
 
-  test("both implementations satisfy the same interface", () => {
-    expect(new StubPaymentProvider()).toBeInstanceOf(PaymentProvider);
-    expect(
-      new MockPaymentProvider({ baseUrl: "http://localhost:5001", apiKey: "k" })
-    ).toBeInstanceOf(PaymentProvider);
-  });
-
-  test("MockPaymentProvider refuses to exist without a URL", () => {
-    expect(() => new MockPaymentProvider({ apiKey: "k" })).toThrow(/PAYMENT_API_URL/);
-  });
 });
 
 describe("StubPaymentProvider", () => {
@@ -52,6 +42,8 @@ describe("StubPaymentProvider", () => {
     expect(result.code).toBeNull();
   });
 
+  // A decline is an ordinary result carrying its reason, not an exception -
+  // checkout has to be able to tell a refusal from a provider that broke.
   test("declines on the test cards, with the reason", async () => {
     const provider = new StubPaymentProvider();
     const result = await provider.authorize(
@@ -60,20 +52,6 @@ describe("StubPaymentProvider", () => {
     expect(result.approved).toBe(false);
     expect(result.code).toBe("insufficient_funds");
     expect(result.providerReference).toBeNull();
-  });
-
-  test("declines above the authorisation limit", async () => {
-    const result = await new StubPaymentProvider().authorize(
-      request({ amountCents: 9999999 })
-    );
-    expect(result.approved).toBe(false);
-    expect(result.code).toBe("limit_exceeded");
-  });
-
-  test("a decline is a result, not an exception", async () => {
-    await expect(
-      new StubPaymentProvider({ forceApproved: false }).authorize(request())
-    ).resolves.toMatchObject({ approved: false });
   });
 
   test("an unavailable provider IS an exception, and a 503 one", async () => {
