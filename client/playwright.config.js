@@ -57,6 +57,19 @@ export default defineConfig({
       url: "http://localhost:5000/api/health",
       reuseExistingServer: true,
       timeout: 60_000,
+      // Rate limiting off for this run only.
+      //
+      // These journeys drive the real server, so NODE_ENV is not "test" and
+      // every tier is live. Thirteen browser journeys from one IP spend a few
+      // hundred requests between them, and the global tier allows 300 per
+      // fifteen minutes - so the suite runs out of budget partway through and
+      // everything after that answers 429. The symptom is the second spec file
+      // failing while passing in isolation, which reads as a broken
+      // application and is not one.
+      //
+      // Limiting itself is covered by tests/integration/app.security.test.js,
+      // which switches it back ON deliberately. Nothing is going untested.
+      env: { ...process.env, RATE_LIMIT_DISABLED: "true" },
     },
     {
       command: "npm run dev",

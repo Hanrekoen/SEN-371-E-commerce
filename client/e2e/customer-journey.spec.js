@@ -18,7 +18,9 @@ test.describe("a new customer buys something", () => {
     const product = await addFirstProductToCart(page);
 
     await page.goto("/cart");
-    await expect(page.getByText(product)).toBeVisible();
+    // Scoped to the line's name. The quantity input's screen-reader label is
+    // "Quantity of <product>", so an unscoped getByText matches twice.
+    await expect(page.locator(".gv-cart__name", { hasText: product })).toBeVisible();
     // The cart's checkout control is a button that navigates, not a link.
     await page.getByRole("button", { name: /^checkout$/i }).click();
     await expect(page).toHaveURL(/\/checkout/);
