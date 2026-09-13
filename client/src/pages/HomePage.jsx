@@ -5,6 +5,7 @@ import ProductCard from "../components/catalog/ProductCard";
 import { MusicIcon, KeyboardIcon, CameraIcon, MonitorIcon } from "../components/ui/Icons";
 import * as productsApi from "../api/products.api";
 import * as categoriesApi from "../api/categories.api";
+import { productImage, onImageError, FALLBACK_IMAGE } from "../utils/productImage";
 import "./HomePage.css";
 
 // The Figma hero calls out this exact product. If a reseed ever drops it,
@@ -21,27 +22,6 @@ const CATEGORY_ICONS = {
   "optical-sensors": CameraIcon,
   "neural-displays": MonitorIcon,
 };
-
-const PRODUCT_IMAGE_MAP = {
-  "aeropulse-anc-headset": "/product-pictures/AeroPulse%20ANC%20Headset%20Blk.jpg",
-  "obsidian-x-9-headset": "/product-pictures/Obsidian%20x9%20black.jpg",
-  "novakey-mx60-mechanical": "/product-pictures/NovaKey%20MX60%20Blk.jpg",
-  "cortex-prime-pro-webcam": "/product-pictures/Cortex%20Prime%20webcam%20blk.jpg",
-  "sonic-labs-dac-amplifier": "/product-pictures/Sonic%20labs%20DAC%20Amplifier.jpg",
-  "apex-pro-neural-display": "/product-pictures/Apex%20pro%20neural%20display%20blk.jpg",
-  "obsidian-x-9-carbon-mouse": "/product-pictures/Obsidian%20x9%20carbon%20mouse%20blk.jpg",
-};
-
-function resolveProductImage(product, fallback = "/product-pictures/Obsidian%20x9%20black.jpg") {
-  if (product?.slug && PRODUCT_IMAGE_MAP[product.slug]) return PRODUCT_IMAGE_MAP[product.slug];
-
-  const src = product?.images?.[0];
-  if (!src) return fallback;
-  if (src.includes("placehold.co") || src.includes("via.placeholder") || src.includes("dummyimage")) {
-    return fallback;
-  }
-  return src;
-}
 
 export default function HomePage() {
   const [hero, setHero] = useState(null);
@@ -135,16 +115,13 @@ export default function HomePage() {
               <div className="gv-hero__media">
                 {hero ? (
                   <img
-                    src={resolveProductImage(hero)}
+                    src={productImage(hero)}
                     alt={hero.name}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/product-pictures/Obsidian%20x9%20black.jpg";
-                    }}
+                    onError={onImageError}
                   />
                 ) : (
                   <img
-                    src="/product-pictures/Obsidian%20x9%20black.jpg"
+                    src={FALLBACK_IMAGE}
                     alt="Obsidian X-9 Headset"
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />

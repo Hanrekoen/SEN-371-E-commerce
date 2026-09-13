@@ -4,7 +4,7 @@ const { body, query } = require("express-validator");
 const asyncHandler = require("../utils/asyncHandler");
 const validate = require("../middleware/validate");
 const controller = require("../controllers/order.controller");
-const { authenticate } = require("../middleware/auth");
+const { authenticate, shoppersOnly } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -27,7 +27,8 @@ const listQueryRules = [
   query("limit").optional().isInt({ min: 1, max: 100 }).toInt(),
 ];
 // Every route here requires a signed-in customer.
-router.post("/",    authenticate,checkoutRules,validate, asyncHandler(controller.checkout));
+// shoppersOnly: an admin administers orders, it does not place them.
+router.post("/",    authenticate, shoppersOnly, checkoutRules, validate, asyncHandler(controller.checkout));
 router.get("/",     authenticate, listQueryRules, validate, asyncHandler(controller.listMine));
 router.get("/:id",  authenticate, asyncHandler(controller.getMine));
 

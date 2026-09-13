@@ -126,6 +126,32 @@ describe("creating a product persists the category", () => {
     expect(res.body.data.category.id).toBe(other);
   });
 
+  // The seed stores images as root-relative paths, but the route validated
+  // them with isURL(), which requires a host - so an admin could not add a
+  // product using an image this app actually ships.
+  test("a product image may be a root-relative path", async () => {
+    const res = await request(app).post("/api/products").set("Authorization", admin)
+      .send({ ...validProduct, images: ["/product-pictures/Obsidian%20x9%20black.jpg"] });
+    expect(res.status).toBe(201);
+    expect(mockCreated.images).toEqual(["/product-pictures/Obsidian%20x9%20black.jpg"]);
+  });
+
+  test("an absolute https URL is still accepted", async () => {
+    const res = await request(app).post("/api/products").set("Authorization", admin)
+      .send({ ...validProduct, images: ["https://cdn.test/a.jpg"] });
+    expect(res.status).toBe(201);
+  });
+
+  test.each([
+    ["a bare word",        "not-a-url"],
+    ["a protocol-relative URL", "//evil.test/a.jpg"],
+    ["a javascript URL",   "javascript:alert(1)"],
+  ])("%s is still refused as an image", async (_label, image) => {
+    const res = await request(app).post("/api/products").set("Authorization", admin)
+      .send({ ...validProduct, images: [image] });
+    expect(res.status).toBe(400);
+  });
+
   test("unknown fields are still refused - the whitelist did not widen", async () => {
     const res = await request(app).post("/api/products").set("Authorization", admin)
       .send({ ...validProduct, ratingAverage: 5, ratingCount: 9999 });

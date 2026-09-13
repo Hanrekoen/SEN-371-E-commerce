@@ -148,3 +148,43 @@
   .gv-pdp__buy { align-items: stretch; }
   .gv-pdp__buy .gv-btn { flex: 1 1 100%; }
 }
+
+/* --- gallery thumbnails (only when a product has more than one shot) --- */
+.gv-pdp__thumbs {
+  margin: var(--gv-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gv-2);
+}
+.gv-pdp__thumb {
+  display: block;
+  width: 68px;
+  height: 68px;
+  padding: 0;
+  overflow: hidden;
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-sm);
+  cursor: pointer;
+}
+.gv-pdp__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gv-pdp__thumb:hover { border-color: var(--gv-text-dim); }
+/* The selected one is outlined, not just tinted, so the choice is visible
+   without relying on colour. */
+.gv-pdp__thumb.is-active { border-color: var(--gv-primary); outline: 1px solid var(--gv-primary); }
+
+/* Shown instead of the buy controls when an admin is signed in. */
+.gv-pdp__admin {
+  margin-top: var(--gv-6);
+  padding: var(--gv-5);
+  background: var(--gv-bg-alt);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-md);
+}
+.gv-pdp__admin-note {
+  margin-bottom: var(--gv-4);
+  color: var(--gv-text-muted);
+  font-size: var(--gv-fs-sm);
+}

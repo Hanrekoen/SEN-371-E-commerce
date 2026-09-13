@@ -1,0 +1,149 @@
+.gv-page.gv-adminp {
+  padding-block: var(--gv-10) var(--gv-16);
+  display: grid;
+  gap: var(--gv-6);
+}
+/* Grid children default to min-width:auto, which lets the wide table below
+   stretch the whole page on a phone. */
+.gv-adminp > * { min-width: 0; }
+
+.gv-page.gv-adminp--message { padding-block: var(--gv-20); color: var(--gv-text-dim); }
+
+.gv-adminp__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gv-5);
+  flex-wrap: wrap;
+}
+.gv-adminp__head h1 { font-size: clamp(26px, 3.2vw, 36px); font-weight: 700; }
+.gv-adminp__head-actions { display: flex; flex-wrap: wrap; gap: var(--gv-3); }
+
+.gv-adminp__alert { margin-top: calc(var(--gv-3) * -1); }
+.gv-adminp__empty { color: var(--gv-text-dim); padding: var(--gv-10) 0; }
+
+/* --- the form --- */
+.gv-adminp__form-wrap {
+  padding: var(--gv-6);
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-lg);
+}
+.gv-adminp__form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gv-4);
+  margin-bottom: var(--gv-5);
+}
+.gv-adminp__form-head h2 { font-size: var(--gv-fs-lg); font-weight: 700; }
+
+.gv-adminp__close {
+  display: grid;
+  place-items: center;
+  width: 36px; height: 36px;
+  background: none;
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-sm);
+  color: var(--gv-text-muted);
+  cursor: pointer;
+}
+.gv-adminp__close:hover { color: var(--gv-text); border-color: var(--gv-text-dim); }
+.gv-adminp__close svg { width: 16px; height: 16px; }
+
+.gv-adminp__form { display: grid; gap: var(--gv-5); }
+.gv-adminp__row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gv-4); }
+.gv-adminp__row--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Matches .gv-field__input so a select and a textarea do not look like a
+   different form from the inputs beside them. */
+.gv-adminp__select,
+.gv-adminp__textarea {
+  width: 100%;
+  padding: var(--gv-3) var(--gv-4);
+  background: var(--gv-bg-alt);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-md);
+  color: var(--gv-text);
+  font: inherit;
+}
+.gv-adminp__select { min-height: 46px; }
+.gv-adminp__textarea { resize: vertical; line-height: 1.5; }
+.gv-adminp__select:focus-visible,
+.gv-adminp__textarea:focus-visible {
+  outline: 2px solid var(--gv-primary);
+  outline-offset: 1px;
+}
+.gv-adminp__textarea::placeholder { color: var(--gv-text-dim); }
+
+.gv-adminp__form-actions { display: flex; flex-wrap: wrap; gap: var(--gv-3); }
+
+/* --- the table --- */
+.gv-adminp__table-wrap { overflow-x: auto; min-width: 0; }
+.gv-adminp__table-wrap:focus-visible { outline: 2px solid var(--gv-primary); outline-offset: 4px; }
+.gv-adminp__table { width: 100%; border-collapse: collapse; min-width: 880px; }
+
+.gv-adminp__table th,
+.gv-adminp__table td {
+  padding: var(--gv-4) var(--gv-3);
+  text-align: left;
+  border-bottom: 1px solid var(--gv-border-soft);
+  font-size: var(--gv-fs-sm);
+  vertical-align: middle;
+}
+.gv-adminp__table thead th {
+  padding-top: 0;
+  color: var(--gv-text-dim);
+  font-size: var(--gv-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gv-adminp__table .is-right { text-align: right; }
+.gv-adminp__table tbody tr:last-child th,
+.gv-adminp__table tbody tr:last-child td { border-bottom: 0; }
+
+/* Dimmed AND labelled - the "Deactivated" word is what actually carries it. */
+.gv-adminp__table tr.is-inactive { opacity: 0.62; }
+
+.gv-adminp__product { display: flex; align-items: center; gap: var(--gv-3); }
+.gv-adminp__product img {
+  width: 44px; height: 44px;
+  object-fit: cover;
+  border-radius: var(--gv-r-sm);
+  background: var(--gv-surface-3);
+  flex: none;
+}
+.gv-adminp__name { display: block; font-weight: 600; }
+.gv-adminp__flag {
+  display: inline-block;
+  margin-top: 2px;
+  color: var(--gv-warning);
+  font-size: var(--gv-fs-xs);
+  font-weight: 700;
+}
+.gv-adminp__sku {
+  color: var(--gv-text-muted);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: var(--gv-fs-xs);
+}
+
+.gv-adminp__actions { display: flex; gap: var(--gv-2); justify-content: flex-end; }
+
+.gv-adminp__scroll-hint { display: none; }
+@media (max-width: 980px) {
+  .gv-adminp__scroll-hint {
+    display: block;
+    margin-top: calc(var(--gv-3) * -1);
+    color: var(--gv-text-dim);
+    font-size: var(--gv-fs-xs);
+  }
+}
+
+@media (max-width: 720px) {
+  .gv-adminp__row,
+  .gv-adminp__row--3 { grid-template-columns: 1fr; }
+  .gv-adminp__head-actions { width: 100%; }
+  .gv-adminp__head-actions > * { flex: 1 1 140px; min-width: 0; }
+  .gv-adminp__form-actions > * { flex: 1 1 100%; }
+}

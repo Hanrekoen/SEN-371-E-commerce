@@ -9,9 +9,18 @@ import "./Navbar.css";
 const LINKS = [
   { to: "/", label: "Home", end: true },
   { to: "/catalog", label: "Catalog" },
-  //{ to: "/product/obsidian-x-9-headset", label: "Product Detail" },
-  { to: "/cart", label: "Cart" },
-  //{ to: "/checkout", label: "Checkout" },
+  // The Figma nav lists every frame, this one included. It points at a
+  // representative product rather than a real "product detail" section.
+  { to: "/product/obsidian-x-9-headset", label: "Product Detail" },
+  // Admins administer the shop rather than buying from it, and the API
+  // refuses their orders, so they are not offered a way to try.
+  { to: "/cart", label: "Cart", shopper: true },
+  { to: "/checkout", label: "Checkout", shopper: true },
+];
+
+const ADMIN_LINKS = [
+  { to: "/admin", label: "Admin", end: true },
+  { to: "/admin/products", label: "Catalogue" },
 ];
 
 export default function Navbar() {
@@ -56,7 +65,7 @@ export default function Navbar() {
 
         <div id="gv-nav-panel" ref={panelRef} className={`gv-nav__panel ${open ? "is-open" : ""}`}>
           <nav className="gv-nav__links" aria-label="Primary">
-            {LINKS.map((l) => (
+            {LINKS.filter((l) => !(l.shopper && isAdmin)).map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
@@ -67,15 +76,17 @@ export default function Navbar() {
                 {l.label}
               </NavLink>
             ))}
-            {isAdmin && (
+            {isAdmin && ADMIN_LINKS.map((l) => (
               <NavLink
-                to="/admin"
+                key={l.to}
+                to={l.to}
+                end={l.end}
                 className={({ isActive }) => `gv-nav__link ${isActive ? "is-active" : ""}`}
                 onClick={() => setOpen(false)}
               >
-                Admin
+                {l.label}
               </NavLink>
-            )}
+            ))}
           </nav>
 
           <div className="gv-nav__actions">
@@ -91,11 +102,13 @@ export default function Navbar() {
               />
             </form>
 
-            <NavLink to="/cart" className="gv-nav__cart" onClick={() => setOpen(false)}>
-              <CartIcon />
-              <span className="gv-sr">Cart</span>
-              {count > 0 && <span className="gv-nav__badge" aria-label={`${count} items in cart`}>{count}</span>}
-            </NavLink>
+            {!isAdmin && (
+              <NavLink to="/cart" className="gv-nav__cart" onClick={() => setOpen(false)}>
+                <CartIcon />
+                <span className="gv-sr">Cart</span>
+                {count > 0 && <span className="gv-nav__badge" aria-label={`${count} items in cart`}>{count}</span>}
+              </NavLink>
+            )}
 
             {isAuthenticated ? (
               <div className="gv-nav__account">

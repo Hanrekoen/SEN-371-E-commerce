@@ -44,4 +44,33 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { authenticate, requireRole };
+/**
+ * Shopping is for customers. An admin account manages the catalogue and the
+ * orders behind it, so letting one buy from the shop it administers mixes the
+ * two roles - the same person would be placing the order and approving it.
+ *
+ * This is the opposite shape to requireRole: it names the roles that may NOT
+ * pass, because the set allowed to shop is "everyone else", and a role added
+ * later should be able to shop without anyone remembering to edit this line.
+ *
+ * Enforced here rather than only hidden in the UI: a hidden button is a
+ * suggestion, and the API is the thing that has to refuse.
+ */
+function denyRole(...roles) {
+  return function (req, _res, next) {
+    if (!req.user) return next(new UnauthorizedError("Authentication required"));
+    if (roles.includes(req.user.role)) {
+      return next(
+        new ForbiddenError(
+          "Admin accounts cannot shop. Sign in with a customer account to place an order."
+        )
+      );
+    }
+    return next();
+  };
+}
+
+// Named for what it protects, so the route files read as intent.
+const shoppersOnly = denyRole("admin");
+
+module.exports = { authenticate, requireRole, denyRole, shoppersOnly };

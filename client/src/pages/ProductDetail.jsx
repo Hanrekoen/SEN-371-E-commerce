@@ -8,12 +8,13 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { formatCents } from "../utils/money";
 import { summaryMessage } from "../utils/apiErrors";
+import { productImage, productImages, onImageError } from "../utils/productImage";
 import "./ProductDetail.css";
 
 export default function ProductDetail() {
   const { slug } = useParams();
   const { addItem } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,6 +25,7 @@ export default function ProductDetail() {
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState(null);
   const [added, setAdded] = useState(false);
+  const [selected, setSelected] = useState(null);
   const addedTimer = useRef(null);
 
   useEffect(() => {
@@ -42,6 +44,7 @@ export default function ProductDetail() {
       }
     }
 
+    setSelected(null);
     if (slug) loadProduct();
     return () => { cancelled = true; };
   }, [slug]);
@@ -106,7 +109,8 @@ export default function ProductDetail() {
     );
   }
 
-  const image = product.images?.[0] || null;
+  const gallery = productImages(product);
+  const image = productImage(product);
 
   return (
     <div className="gv-page gv-pdp">
@@ -118,11 +122,31 @@ export default function ProductDetail() {
 
       <div className="gv-pdp__body">
         <div className="gv-pdp__media">
-          {image ? (
-            <img src={image} alt={product.name} className="gv-pdp__image" />
-          ) : (
-            // No stock photo invented - an honest placeholder instead.
-            <div className="gv-pdp__image gv-pdp__image--blank" role="img" aria-label="No product image available" />
+          <img
+            src={selected || image}
+            alt={product.name}
+            className="gv-pdp__image"
+            onError={onImageError}
+          />
+
+          {/* Products seeded with more than one shot (colourways) get a
+              thumbnail strip; one image renders nothing extra. */}
+          {gallery.length > 1 && (
+            <ul className="gv-pdp__thumbs">
+              {gallery.map((src) => (
+                <li key={src}>
+                  <button
+                    type="button"
+                    className={`gv-pdp__thumb ${(selected || image) === src ? "is-active" : ""}`}
+                    aria-label={`Show image ${gallery.indexOf(src) + 1} of ${gallery.length}`}
+                    aria-pressed={(selected || image) === src}
+                    onClick={() => setSelected(src)}
+                  >
+                    <img src={src} alt="" loading="lazy" onError={onImageError} />
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 
@@ -139,6 +163,16 @@ export default function ProductDetail() {
 
           {addError && <div className="gv-pdp__alert"><Alert tone="danger">{addError}</Alert></div>}
 
+          {isAdmin ? (
+            // An admin manages this product rather than buying it, so the buy
+            // controls are replaced with the thing they would actually want.
+            <div className="gv-pdp__admin">
+              <p className="gv-pdp__admin-note">
+                You are signed in as an admin, so this product cannot be bought from here.
+              </p>
+              <Button as={Link} to="/admin/products" variant="outline">Manage the catalogue</Button>
+            </div>
+          ) : (
           <div className="gv-pdp__buy">
             <div className="gv-pdp__qty">
               <label htmlFor="gv-pdp-qty">Quantity</label>
@@ -160,15 +194,16 @@ export default function ProductDetail() {
               <CartIcon /> {outOfStock ? "Out of stock" : "Add to cart"}
             </Button>
           </div>
+          )}
 
           {/* role="status" so the confirmation is announced, not just seen. */}
-          {added && (
+          {added && !isAdmin && (
             <p className="gv-pdp__added" role="status">
               Added to your cart. <Link to="/cart">View cart</Link>
             </p>
           )}
 
-          {!isAuthenticated && !outOfStock && (
+          {!isAuthenticated && !isAdmin && !outOfStock && (
             <p className="gv-pdp__hint">You will be asked to sign in before this is added.</p>
           )}
 

@@ -1,10 +1,10 @@
 "use strict";
 const express = require("express");
 const { body, query } = require("express-validator");
+const validator = require("validator");
 const asyncHandler = require("../utils/asyncHandler");
 const validate = require("../middleware/validate");
 const controller = require("../controllers/product.controller");
-// Person 2 supplies these. Uncomment the guards once middleware/auth.js exists.
 const { authenticate, requireRole } = require("../middleware/auth");
 
 const router = express.Router();
@@ -29,7 +29,19 @@ const productWriteRules = [
     body("categoryId").isMongoId().withMessage("Category ID must be a valid MongoDB ObjectId"),
     body("stockQty").isInt({ min: 0 }).toInt().withMessage("Stock quantity must be a non-negative integer"),
     body("images").isArray({ min: 1 }).withMessage("Images must be an array of URLs"),
-    body("images.*").isURL().withMessage("Each image must be a valid URL"),
+    // isURL() alone rejects a root-relative path, which is what every seeded
+    // product uses (/product-pictures/...). Requiring an absolute URL would
+    // make it impossible to add a product using an image the app actually
+    // ships, so both forms are accepted - and nothing else is.
+    body("images.*")
+      .isString()
+      .bail()
+      .custom((value) => {
+        const url = String(value).trim();
+        if (url.startsWith("/") && !url.startsWith("//")) return true;
+        return validator.isURL(url, { protocols: ["http", "https"], require_protocol: true });
+      })
+      .withMessage("Each image must be an http(s) URL or a path beginning with /"),
     body("variants").optional().isArray(),
     body("specs").optional().isArray(),
 ];
