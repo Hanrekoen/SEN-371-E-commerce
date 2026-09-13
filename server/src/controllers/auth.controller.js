@@ -57,4 +57,10 @@ async function logout(req, res) {
   return noContent(res);
 }
 
-module.exports = { register, login, refresh, logout };
+// Who am I? The id comes from the verified token, never from the request, so
+// this can only ever return the caller's own record.
+async function me(req, res) {
+  return ok(res, await authService.getPublicUser(req.user.id));
+}
+
+module.exports = { register, login, refresh, logout, me };

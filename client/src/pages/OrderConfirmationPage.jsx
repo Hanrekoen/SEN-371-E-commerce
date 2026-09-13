@@ -1,17 +1,74 @@
-import { Link, Navigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
 import Button from "../components/ui/Button";
+import Alert from "../components/ui/Alert";
 import { ShieldIcon, CardIcon } from "../components/ui/Icons";
+import { getMyOrder } from "../api/orders.api";
 import { formatCents } from "../utils/money";
+import { summaryMessage } from "../utils/apiErrors";
 import "./OrderConfirmationPage.css";
 
+/**
+ * Route: /orders/:orderId/confirmation
+ *
+ * The order is fetched by id rather than read out of navigation state, so a
+ * refresh, a bookmark or a link pasted to someone else all behave the same
+ * way. Checkout still passes the order along in state, which is used only to
+ * paint immediately while the fetch confirms it - the fetched copy always
+ * wins, since it is the one the server stands behind.
+ *
+ * No ownership check here: order.service.getForUser already refuses an order
+ * that belongs to someone else, and a 403 from the API is the answer.
+ */
 export default function OrderConfirmationPage() {
+  const { orderId } = useParams();
   const location = useLocation();
-  const order = location.state?.order;
+  const handedOver = location.state?.order;
 
-  // Reached without an order in state - a refresh, or a direct link. There is
-  // nothing to confirm, so send them to their order history instead of
-  // rendering an empty receipt.
-  if (!order) return <Navigate to="/orders" replace />;
+  const [order, setOrder] = useState(handedOver || null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(!handedOver);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!orderId) return undefined;
+
+    getMyOrder(orderId)
+      .then((fetched) => { if (!cancelled) { setOrder(fetched); setError(null); } })
+      .catch((err) => { if (!cancelled) setError(err); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [orderId]);
+
+  if (loading) {
+    return (
+      <div className="gv-page gv-confirm gv-confirm--message">
+        <p className="gv-confirm__loading" role="status">Confirming your order…</p>
+      </div>
+    );
+  }
+
+  // Only an error if we have nothing to show. If the hand-over copy is on
+  // screen, a failed refetch is not worth replacing a valid receipt with an
+  // error - the customer's order did go through.
+  if (error && !order) {
+    return (
+      <div className="gv-page gv-confirm gv-confirm--message">
+        <Alert tone="danger" title="We could not load that order">
+          {error.status === 403
+            ? "That order belongs to a different account."
+            : error.status === 404
+              ? "We have no record of an order with that reference."
+              : summaryMessage(error, "Please try again in a moment.")}
+        </Alert>
+        <div className="gv-confirm__actions">
+          <Button as={Link} to="/orders" size="lg">View your orders</Button>
+          <Button as={Link} to="/" size="lg" variant="outline">Back to the vault</Button>
+        </div>
+      </div>
+    );
+  }
 
   const address = order.shippingAddress || {};
 

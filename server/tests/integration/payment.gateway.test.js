@@ -13,12 +13,13 @@ const CLIENT_TIMEOUT_MS = 5000;
 const GATEWAY_STALL_MS = 20000;
 process.env.GATEWAY_SLOW_MS = String(GATEWAY_STALL_MS);
 
-// Separate package, own node_modules. If it is not installed, skip with a
-// readable message instead of a resolution stack trace inside body-parser.
+// The gateway now lives in the server's own src/, so there is no separate
+// install to miss - but the guard stays, because a missing gateway should
+// skip with a readable message rather than a stack trace.
 let gatewayApp = null;
 let gatewayLoadError = null;
 try {
-  gatewayApp = require("../../../payment-gateway/src/app");
+  gatewayApp = require("../../src/gateway/app");
 } catch (err) {
   gatewayLoadError = err;
 }
@@ -28,8 +29,8 @@ const { ServiceUnavailableError, ValidationError } = require("../../src/errors/A
 
 if (!gatewayApp) {
   console.warn(
-    "\n[skipped] tests/integration/payment.gateway.test.js needs the gateway installed:" +
-    "\n          cd payment-gateway && npm ci" +
+    "\n[skipped] tests/integration/payment.gateway.test.js could not load the gateway:" +
+    "\n          expected server/src/gateway/app.js" +
     `\n          (${gatewayLoadError.message.split("\n")[0]})\n`
   );
 }

@@ -4,11 +4,16 @@ const { MAX_AMOUNT_CENTS, luhnValid, lookup } = require("./cards");
 
 // GadgetVault mock payment gateway.
 //
-// A separate service on purpose: own package.json, own port, own response
-// shape. The API has to make a real HTTP call and translate a foreign
-// response into its own domain - the work a Stripe integration would involve.
-// The network call, API key, status codes, latency and failures are real.
+// This stands in for a third-party provider. It lives in the repository for
+// convenience - one npm install, one npm start - but it is NOT part of the
+// API: it has its own port, its own API key, and its own response shape,
+// and nothing in src/ outside this folder may require it. The API reaches it
+// the same way it would reach Stripe, over HTTP, so the integration work
+// (network call, API key, status codes, latency, failures) stays real.
 // Only the money is imaginary.
+//
+// server.js starts it on PAYMENT_GATEWAY_PORT unless PAYMENT_EMBEDDED=false,
+// in which case run it yourself and point PAYMENT_API_URL wherever it lives.
 
 const API_KEY = process.env.GATEWAY_API_KEY || "dev-gateway-key";
 const TIMEOUT_CARD_DELAY_MS = Number(process.env.GATEWAY_SLOW_MS) || 15000;

@@ -89,7 +89,9 @@ export default function CheckoutPage() {
     // Checkout empties the cart server-side, so mirror that locally rather
     // than leaving a stale badge in the navbar.
     setCart({ items: [], itemCount: 0, subtotalCents: 0, shippingCents: 0, taxCents: 0, totalCents: 0 });
-    navigate("/order-confirmation", { replace: true, state: { order } });
+    // Addressed by id so the receipt survives a refresh. The order also rides
+    // along in state, purely so the page can paint before its fetch returns.
+    navigate(`/orders/${order.id}/confirmation`, { replace: true, state: { order } });
   }
 
   // The overlay has already explained the failure; closing it leaves the same

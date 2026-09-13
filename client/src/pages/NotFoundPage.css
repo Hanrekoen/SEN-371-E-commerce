@@ -1,0 +1,77 @@
+.gv-404 {
+  padding-block: var(--gv-20) var(--gv-16);
+  max-width: 620px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+/* Large, but muted and marked aria-hidden: the heading below is the real
+   message, and a screen reader should not have to hear "404" twice. */
+.gv-404__code {
+  font-size: clamp(72px, 14vw, 132px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  background: linear-gradient(140deg, var(--gv-primary), var(--gv-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gv-404__title {
+  margin-top: var(--gv-4);
+  font-size: clamp(24px, 3.4vw, 34px);
+  font-weight: 700;
+}
+
+.gv-404__sub {
+  margin-top: var(--gv-4);
+  color: var(--gv-text-muted);
+  line-height: 1.6;
+}
+
+.gv-404__path {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px var(--gv-2);
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-sm);
+  color: var(--gv-text);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: var(--gv-fs-sm);
+  /* A long junk URL must not stretch the page. */
+  overflow-wrap: anywhere;
+}
+
+.gv-404__actions {
+  margin-top: var(--gv-8);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--gv-3);
+}
+.gv-404__actions .gv-btn svg { width: 16px; height: 16px; }
+
+.gv-404__links {
+  margin: var(--gv-10) 0 0;
+  padding-top: var(--gv-6);
+  border-top: 1px solid var(--gv-border-soft);
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--gv-2) var(--gv-6);
+}
+.gv-404__links a {
+  display: inline-block;
+  padding: var(--gv-2) 0;
+  color: var(--gv-text-muted);
+  font-size: var(--gv-fs-sm);
+}
+.gv-404__links a:hover { color: var(--gv-text); }
+
+@media (max-width: 480px) {
+  .gv-404 { padding-block: var(--gv-12) var(--gv-10); }
+  .gv-404__actions > * { flex: 1 1 100%; }
+}

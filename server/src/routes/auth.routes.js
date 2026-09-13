@@ -44,5 +44,7 @@ router.post("/register", registerRules, validate, asyncHandler(controller.regist
 router.post("/login", loginLimiter, loginRules, validate, asyncHandler(controller.login));
 router.post("/refresh", asyncHandler(controller.refresh));
 router.post("/logout", authenticate, asyncHandler(controller.logout));
+// The client calls this on every page load to restore a session.
+router.get("/me", authenticate, asyncHandler(controller.me));
 
 module.exports = router;

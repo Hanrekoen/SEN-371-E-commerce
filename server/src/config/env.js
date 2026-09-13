@@ -28,7 +28,7 @@ module.exports = {
   },
 
   // Payment gateway (Milestone 3). Deliberately NOT in REQUIRED: the defaults
-  // match payment-gateway/, so a dev machine needs no .env entries for it.
+  // match src/gateway/, so a dev machine needs no .env entries for it.
   payment: {
     // "mock" = real HTTP call, "stub" = in-process.
     provider: process.env.PAYMENT_PROVIDER || (process.env.NODE_ENV === "test" ? "stub" : "mock"),
@@ -36,5 +36,13 @@ module.exports = {
     apiKey: process.env.PAYMENT_API_KEY || "dev-gateway-key",
     timeoutMs: Number(process.env.PAYMENT_TIMEOUT_MS) || 5000,
     currency: process.env.PAYMENT_CURRENCY || "ZAR",
+
+    // The mock gateway runs inside this process on its own port, so `npm
+    // start` is the only command needed. The API still reaches it over HTTP -
+    // nothing about the integration is short-circuited, it just no longer
+    // needs a second terminal. Set PAYMENT_EMBEDDED=false to host it
+    // elsewhere and point PAYMENT_API_URL at it.
+    embedded: process.env.PAYMENT_EMBEDDED !== "false",
+    gatewayPort: Number(process.env.PAYMENT_GATEWAY_PORT) || 5001,
   },
 };

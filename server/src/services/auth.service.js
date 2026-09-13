@@ -94,4 +94,18 @@ async function logout(userId) {
   await userRepository.incrementTokenVersion(userId);
 }
 
-module.exports = { register, login, refresh, logout, toPublicUser };
+/**
+ * The signed-in user, re-read from the database rather than decoded from the
+ * token. A token can outlive a deactivation or a role change; the record
+ * cannot. The client calls this on every page load to restore a session, so
+ * an account disabled mid-session stops working on the next reload.
+ */
+async function getPublicUser(userId) {
+  const user = await userRepository.findById(userId);
+  if (!user || !user.isActive) {
+    throw new UnauthorizedError("Session is no longer valid");
+  }
+  return toPublicUser(user);
+}
+
+module.exports = { register, login, refresh, logout, getPublicUser, toPublicUser };
