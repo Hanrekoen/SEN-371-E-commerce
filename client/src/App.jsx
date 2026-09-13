@@ -8,17 +8,9 @@ import CheckoutPage from "./pages/CheckoutPage";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import NotFoundPage from "./pages/NotFoundPage";
-
-// Placeholder for the routes other team members own this milestone, so the
-// navbar links resolve instead of 404-ing while their pages are in progress.
-function Pending({ title }) {
-  return (
-    <div className="gv-page" style={{ padding: "80px 0" }}>
-      <h1>{title}</h1>
-      <p className="gv-muted">This screen is being built by another team member.</p>
-    </div>
-  );
-}
+import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
+import OrderHistory from "./pages/OrderHistory";
 
 export default function App() {
   return (
@@ -26,9 +18,9 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="catalog" element={<CatalogPage />} />
-        <Route path="product/:slug" element={<Pending title="Product detail" />} />
-        <Route path="cart" element={<Pending title="Cart" />} />
-        <Route path="orders" element={<RequireAuth><Pending title="Order history" /></RequireAuth>} />
+        <Route path="product/:slug" element={<ProductDetail />} />
+        <Route path="cart" element={<Cart />} />
+        <Route path="orders" element={<RequireAuth><OrderHistory /></RequireAuth>} />
 
         <Route path="login" element={<LoginPage />} />
 

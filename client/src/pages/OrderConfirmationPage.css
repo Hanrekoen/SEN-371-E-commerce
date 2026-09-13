@@ -105,7 +105,7 @@
 }
 
 /* Loading and error states share the page frame but have no two-column body. */
-.gv-confirm--message {
+.gv-page.gv-confirm--message {
   padding-block: var(--gv-20) var(--gv-16);
   max-width: 560px;
   margin-inline: auto;

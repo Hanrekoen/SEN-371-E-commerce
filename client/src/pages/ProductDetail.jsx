@@ -1,92 +1,189 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import Alert from "../components/ui/Alert";
+import Button from "../components/ui/Button";
+import { CartIcon } from "../components/ui/Icons";
 import * as productsApi from "../api/products.api";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import { formatCents } from "../utils/money";
+import { summaryMessage } from "../utils/apiErrors";
 import "./ProductDetail.css";
 
-function ProductDetail() {
+export default function ProductDetail() {
   const { slug } = useParams();
   const { addItem } = useCart();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState(null);
   const [added, setAdded] = useState(false);
+  const addedTimer = useRef(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadProduct() {
+      setLoading(true);
+      setError(null);
       try {
-        setLoading(true);
-        setError(null);
         const data = await productsApi.getProduct(slug);
-        setProduct(data);
+        if (!cancelled) setProduct(data);
       } catch (err) {
-        setError(err.message || "Could not load product");
+        if (!cancelled) setError(err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     if (slug) loadProduct();
+    return () => { cancelled = true; };
   }, [slug]);
 
-  function handleAddToCart() {
-    if (!product) return;
+  // Clear the pending "added" message if the page goes away first.
+  useEffect(() => () => clearTimeout(addedTimer.current), []);
 
-    addItem({ productId: product.id, quantity });
-    setAdded(true);
+  // The public product DTO exposes `inStock` as a boolean, never the count -
+  // stock levels are commercially sensitive and only admins get stockQty. So
+  // availability is read from inStock, and the quantity cap is a plain limit
+  // rather than a pretend "N left".
+  const outOfStock = product ? product.inStock === false : false;
+  const MAX_QTY = 99;
 
-    setTimeout(() => setAdded(false), 2000);
+  async function handleAddToCart() {
+    if (!product || outOfStock) return;
+
+    // The cart lives on the server against a user, so there is nowhere to put
+    // this until they are signed in. Send them to sign in and come back here.
+    if (!isAuthenticated) {
+      // RequireAuth hands LoginPage a pathname string, so match that shape
+      // rather than a location object it would not know what to do with.
+      navigate("/login", { state: { from: location.pathname } });
+      return;
+    }
+
+    setAdding(true);
+    setAddError(null);
+    try {
+      await addItem({ productId: product.id, quantity });
+      setAdded(true);
+      clearTimeout(addedTimer.current);
+      addedTimer.current = setTimeout(() => setAdded(false), 2500);
+    } catch (err) {
+      // Stock can run out between the page loading and this click, so the
+      // server's refusal is shown rather than swallowed.
+      setAddError(summaryMessage(err, "We could not add that to your cart."));
+    } finally {
+      setAdding(false);
+    }
   }
 
   if (loading) {
-    return <p className="status-text">loading product...</p>;
+    return (
+      <div className="gv-page gv-pdp gv-pdp--message">
+        <p className="gv-pdp__status" role="status">Loading product…</p>
+      </div>
+    );
   }
 
-  if (error) {
-    return <p className="status-text error">{error}</p>;
+  if (error || !product) {
+    const missing = error?.status === 404 || !product;
+    return (
+      <div className="gv-page gv-pdp gv-pdp--message">
+        <Alert tone={missing ? "warning" : "danger"} title={missing ? "Product not found" : "Could not load this product"}>
+          {missing
+            ? "We have nothing in the catalogue at that address."
+            : summaryMessage(error, "Please try again in a moment.")}
+        </Alert>
+        <Button as={Link} to="/catalog" size="lg">Back to the catalogue</Button>
+      </div>
+    );
   }
 
-  if (!product) {
-    return <p className="status-text">product not found</p>;
-  }
-
-  const productImage = product.images?.[0] || "/product-pictures/Obsidian%20x9%20black.jpg";
+  const image = product.images?.[0] || null;
 
   return (
-    <div className="product-detail">
-      <img
-        src={productImage}
-        alt={product.name}
-        className="product-image"
-      />
+    <div className="gv-page gv-pdp">
+      <nav className="gv-pdp__crumbs" aria-label="Breadcrumb">
+        <Link to="/catalog">Catalogue</Link>
+        <span aria-hidden="true"> / </span>
+        <span>{product.name}</span>
+      </nav>
 
-      <div className="product-info">
-        <h1>{product.name}</h1>
-        <p className="product-price">{formatCents(product.priceCents)}</p>
-        <p className="product-description">{product.description}</p>
-
-        <div className="quantity-row">
-          <label htmlFor="quantity">quantity</label>
-          <input
-            id="quantity"
-            type="number"
-            min="1"
-            value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
-          />
+      <div className="gv-pdp__body">
+        <div className="gv-pdp__media">
+          {image ? (
+            <img src={image} alt={product.name} className="gv-pdp__image" />
+          ) : (
+            // No stock photo invented - an honest placeholder instead.
+            <div className="gv-pdp__image gv-pdp__image--blank" role="img" aria-label="No product image available" />
+          )}
         </div>
 
-        <button className="add-to-cart-btn" onClick={handleAddToCart}>
-          add to cart
-        </button>
+        <div className="gv-pdp__info">
+          {product.brand && <p className="gv-pdp__brand">{product.brand}</p>}
+          <h1 className="gv-pdp__name">{product.name}</h1>
+          <p className="gv-pdp__price">{formatCents(product.priceCents)}</p>
 
-        {added && <p className="added-message">added to cart</p>}
+          <p className={`gv-pdp__stock ${outOfStock ? "is-out" : "is-in"}`}>
+            {outOfStock ? "Out of stock" : "In stock"}
+          </p>
+
+          {product.description && <p className="gv-pdp__description">{product.description}</p>}
+
+          {addError && <div className="gv-pdp__alert"><Alert tone="danger">{addError}</Alert></div>}
+
+          <div className="gv-pdp__buy">
+            <div className="gv-pdp__qty">
+              <label htmlFor="gv-pdp-qty">Quantity</label>
+              <input
+                id="gv-pdp-qty"
+                type="number"
+                min="1"
+                max={MAX_QTY}
+                value={quantity}
+                disabled={outOfStock}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  if (Number.isInteger(n) && n >= 1) setQuantity(Math.min(n, MAX_QTY));
+                }}
+              />
+            </div>
+
+            <Button size="lg" loading={adding} disabled={outOfStock} onClick={handleAddToCart}>
+              <CartIcon /> {outOfStock ? "Out of stock" : "Add to cart"}
+            </Button>
+          </div>
+
+          {/* role="status" so the confirmation is announced, not just seen. */}
+          {added && (
+            <p className="gv-pdp__added" role="status">
+              Added to your cart. <Link to="/cart">View cart</Link>
+            </p>
+          )}
+
+          {!isAuthenticated && !outOfStock && (
+            <p className="gv-pdp__hint">You will be asked to sign in before this is added.</p>
+          )}
+
+          {product.specs?.length > 0 && (
+            <dl className="gv-pdp__specs">
+              {product.specs.map((spec) => (
+                <div key={spec.key || spec.label}>
+                  <dt>{spec.key || spec.label}</dt>
+                  <dd>{spec.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
       </div>
     </div>
   );
 }
-
-export default ProductDetail;
