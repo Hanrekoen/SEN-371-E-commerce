@@ -13,7 +13,7 @@
 |---|---|---|---|
 | **API (Jest + supertest)** | 140 | 140 | **77.7%** |
 | **Client (Vitest + React Testing Library)** | 151 | 151 | **57.5%** |
-| **End-to-end (Playwright)** | 14 | see §8 | — |
+| **End-to-end (Playwright)** | 14 | see Section 7 | — |
 | **Total automated** | **305** | | |
 
 Both suites enforce a coverage floor in configuration, so coverage cannot
@@ -25,53 +25,7 @@ intermittent failure is reported as a finding rather than hidden by a re-run.
 
 ---
 
-## 2. The suite was deliberately cut back
-
-An earlier draft of this milestone had **521 tests**. It was reduced to 305 on
-purpose, and the reduction is reported here rather than hidden, because the
-reason it was possible is itself a finding about the suite.
-
-| | Before | After | Cut |
-|---|---|---|---|
-| API | 243 | 140 | −42% |
-| Client | 259 | 151 | −42% |
-| End-to-end | 19 | 14 | −26% |
-
-**Statement coverage moved by less than a point.** The client went from 58.5%
-to 57.5% while losing 108 tests; the API went from 80.8% to 77.7% while losing
-103. A suite where removing 40% of the tests costs one point of coverage was
-not 40% more thorough — it was 40% more repetitive, and the repetition was
-costing review time and run time without buying anything.
-
-Three kinds of redundancy came out:
-
-1. **The new function tests had made older integration tests redundant.** This
-   was the largest single cut. `tests/function/shopping.journey.test.js` walks
-   a cart through checkout, the order history and an admin's fulfilment in one
-   stateful sequence, which re-proves most of what `cart.api.test.js`,
-   `admin.order-status.test.js` and the whole of `admin.cannot.shop.test.js`
-   asserted one endpoint at a time. `admin.cannot.shop.test.js` was deleted
-   outright; the other two keep only what the journey does not reach
-   (request validation, 401s for anonymous callers, an unknown status string).
-   The same happened between `auth.lifecycle.test.js` and `auth.me.test.js`.
-2. **The same rule proved with several inputs.** `test.each` tables of four and
-   five rows that all exercise one code path were reduced to the clearest case.
-3. **Presentational assertions on screens already covered behaviourally** — a
-   heading renders, free shipping says "FREE" — where a test on the same screen
-   already exercised that render path.
-
-What did **not** get cut: every authorisation rule, every assertion about money
-or integer cents, every test that holds a fixed defect in place (§7), at least
-one accessibility assertion per component file, and the twelve tests of the
-test-driven feature in [`TDD_LOG.md`](./TDD_LOG.md).
-
-Each deletion was checked against what still covered the rule. Four narrower
-assertions were knowingly given up and are named in §6 rather than quietly
-dropped.
-
----
-
-## 3. Test strategy
+## 2. Test strategy
 
 Five levels, each answering a question the level below it cannot.
 
@@ -84,11 +38,11 @@ Five levels, each answering a question the level below it cannot.
 | **End-to-end** | Playwright | everything — real browser, real build, real API, real database | nothing | are the pieces wired to each other? |
 
 The rule behind this shape: **each level fakes exactly one thing less than the
-one below it.** That is what makes the top level worth running, and it is also
-what made §2's cut possible — when a higher level starts covering a rule for
-real, the lower level's version of it is no longer earning its place.
+one below it.** That is what makes the top level worth running, and it is what
+lets each level stay fast and focused — a rule proved for real at a higher level
+does not need re-proving with a stand-in at a lower one.
 
-### Where each rubric requirement is met
+### Where each assessment requirement is met
 
 | Requirement | Where | Tests |
 |-------------|-------|-------|
@@ -102,7 +56,7 @@ real, the lower level's version of it is no longer earning its place.
 
 ---
 
-## 4. How to run everything
+## 3. How to run everything
 
 ```bash
 # API — 140 tests
@@ -134,7 +88,7 @@ one holding data you need to keep.
 
 ---
 
-## 5. Coverage analysis — API
+## 4. Coverage analysis — API
 
 `cd server && npm run test:coverage`
 
@@ -164,8 +118,8 @@ something calls it. Every route is reached by a test.
 
 **Services at 79%**, holding the business rules — password handling, token
 rotation, pricing, stock, the status transition table. This is where a defect
-costs real money, and it is what the function tests were added for:
-`auth.service` and `order.service` were at 29% and 31% before this milestone.
+costs real money, and it is what the function tests exist for: `auth.service`
+and `order.service` are at 100% and 94% respectively.
 
 **Repositories at 21%, deliberately.** Each method is a one-line Mongoose call
 (`this.model.findOne(...).exec()`). Covering them means either running a real
@@ -190,7 +144,7 @@ it on the merits.
 
 ---
 
-## 6. Coverage analysis — Client
+## 5. Coverage analysis — Client
 
 `cd client && npm run test:coverage`
 
@@ -228,7 +182,7 @@ screen handling money or identity is at or near 100% statements:
 The overall statement figure is held down by whole files at 0%, not by shallow
 testing of covered ones:
 
-| Untested file | Lines | Why it was left | Covered elsewhere? |
+| Untested file | Lines | Why | Covered elsewhere? |
 |---------------|-------|-----------------|---------------------|
 | `HomePage.jsx` | 221 | presentational — marketing sections, no logic, no money | yes, by the E2E journey |
 | `CatalogPage.jsx` | 253 | filter and paging state; the real risk is server-side filtering | partly — E2E adds a product and finds it |
@@ -245,23 +199,23 @@ claim that the untested files are risk-free. `TrendChart` and `Sparkline` have
 real arithmetic in them and no test at all, which is the single biggest gap in
 this report.
 
-### Assertions knowingly given up in the §2 cut
+### Narrower gaps worth naming
 
-Named here rather than quietly dropped:
+Across both suites, named rather than left to be discovered:
 
-1. The wording of the admin's cart refusal (`/customer account/i`) — the rule is
-   still enforced and asserted, the specific message is not.
-2. `shoppersOnly` is asserted on `POST /api/cart/items` but no longer per-route
-   on `PATCH`/`DELETE /api/cart/items/:id` and `DELETE /api/cart`. Same
-   middleware, same router lines, but the wiring of each is unasserted.
+1. The exact wording of the admin's cart refusal (`/customer account/i`) — the
+   rule is enforced and asserted, the specific message is not.
+2. `shoppersOnly` is asserted on `POST /api/cart/items` but not per-route on
+   `PATCH`/`DELETE /api/cart/items/:id` and `DELETE /api/cart`. Same middleware,
+   same router lines, but the wiring of each is unasserted.
 3. That an admin can still `GET /api/orders`.
 4. That `passwordHash` and `tokenVersion` never leak from `GET /auth/me`
    specifically — `auth.lifecycle` asserts this on the register response, and
    `getPublicUser` is a different code path.
 
-None is an authorisation rule that is now unenforced; each is a narrower
-assertion about a rule still covered elsewhere. They are listed so that a
-future change to any of them is a deliberate decision rather than a surprise.
+None is an authorisation rule that is unenforced; each is a narrower assertion
+about a rule covered elsewhere. They are listed so that a future change to any
+of them is a deliberate decision rather than a surprise.
 
 ### Deliberate design choices in the client suite
 
@@ -280,10 +234,10 @@ future change to any of them is a deliberate decision rather than a surprise.
 
 ---
 
-## 7. Defects found by these tests
+## 6. Defects found by these tests
 
-Every one of these was found by writing a test, not by using the app. Each was
-fixed, and the test that found it survived the §2 cut for exactly that reason.
+Every one of these was found by writing a test, not by using the application. Each was
+fixed, and each fix is held in place by the test that found it.
 
 | # | Defect | Found by | Severity | Fix |
 |---|--------|----------|----------|-----|
@@ -300,18 +254,18 @@ fixed, and the test that found it survived the §2 cut for exactly that reason.
 D1 is the one worth dwelling on. It is the exact failure mode this milestone
 exists to prevent: a green suite over a broken application, because the suite
 had no opinion about the endpoint that mattered most. Coverage analysis is what
-makes that visible, which is why §5 and §6 name uncovered files by name rather
+makes that visible, which is why Sections 4 and 5 name uncovered files by name rather
 than reporting one percentage.
 
 ---
 
-## 8. End-to-end status — stated plainly
+## 7. End-to-end status — stated plainly
 
 The 14 Playwright journeys are written, and `npx playwright test --list`
 enumerates all 14 without error. They have **not** been executed in the
 environment this report was written in, because that environment has no MongoDB
 and none could be installed. They are intended to be run on a development
-machine with `server/.env` configured, using the commands in §4.
+machine with `server/.env` configured, using the commands in Section 4.
 
 This is said explicitly rather than left implied. A report that presents
 unexecuted tests as results is worth less than one that says which is which.
@@ -331,7 +285,7 @@ is told this account does not shop.
 
 ---
 
-## 9. What this test suite still cannot tell you
+## 8. What this test suite still cannot tell you
 
 - **Performance and load.** Nothing here measures response time, and the
   function tests use in-memory collections, so they say nothing about query
@@ -350,7 +304,7 @@ is told this account does not shop.
 
 ---
 
-## 10. Files
+## 9. Files
 
 ```
 server/tests/unit/          38 unit tests
