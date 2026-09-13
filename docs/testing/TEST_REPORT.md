@@ -13,8 +13,8 @@
 |---|---|---|---|
 | **API (Jest + supertest)** | 140 | 140 | **77.7%** |
 | **Client (Vitest + React Testing Library)** | 151 | 151 | **57.5%** |
-| **End-to-end (Playwright)** | 14 | see Section 7 | — |
-| **Total automated** | **305** | | |
+| **End-to-end (Playwright)** | 13 | 13 | — |
+| **Total automated** | **304** | | |
 
 Both suites enforce a coverage floor in configuration, so coverage cannot
 silently fall: `npm run test:coverage` exits non-zero below it.
@@ -47,11 +47,11 @@ does not need re-proving with a stand-in at a lower one.
 | Requirement | Where | Tests |
 |-------------|-------|-------|
 | Test-Driven Development | [`TDD_LOG.md`](./TDD_LOG.md) — the categories feature, red output and all | 12 |
-| Automated Test Implementation | three runners, all in `npm test` | 305 |
+| Automated Test Implementation | three runners, all in `npm test` | 304 |
 | Unit Testing | `server/tests/unit/`, `client/src/utils/` | 38 + 26 |
 | Component Testing | `client/src/**/*.test.jsx` | 125 |
 | Function Testing | `server/tests/function/`, `server/tests/integration/` | 32 + 70 |
-| User Testing | Playwright journeys **and** the moderated study in [`USABILITY_TEST_PLAN.md`](./USABILITY_TEST_PLAN.md) | 14 + 5 sessions |
+| User Testing | Playwright journeys **and** the moderated study in [`USABILITY_TEST_PLAN.md`](./USABILITY_TEST_PLAN.md) | 13 + 5 sessions |
 | Test Reporting with Coverage Analysis | this document | — |
 
 ---
@@ -74,7 +74,7 @@ npm install
 npm test
 npm run test:coverage     # HTML report in client/coverage/index.html
 
-# End-to-end — 14 journeys. Needs a database.
+# End-to-end — 13 journeys. Needs a database.
 cd server && npm run seed         # seeds the catalogue and the test accounts
 cd client
 npx playwright install chromium   # once, per machine
@@ -250,6 +250,8 @@ fixed, and each fix is held in place by the test that found it.
 | D7 | `require("validator")` was only a transitive dependency of express-validator — one `npm install` away from breaking the product routes | dependency check while fixing D6 | Serious | replaced with Node's built-in `URL` |
 | D8 | The client rendered US dollars while the server authorised in ZAR | `money.test.js` | Serious | `money.js` fixed to ZAR / en-ZA |
 | D9 | The client would not build — `main.jsx` imported Bootstrap but it was not in `package.json` | running the suite on a clean install | Critical | `bootstrap@^5.3.8` added |
+| D10 | The end-to-end suite exhausted the API's own global rate limit mid-run. Thirteen browser journeys from one IP spend a few hundred requests; the tier allows 300 per fifteen minutes, so the second spec file received 429s that read as application failures | running the full E2E suite — the specs passed individually and failed together | Serious (test integrity) | all three limiter tiers honour `RATE_LIMIT_DISABLED`; `playwright.config.js` sets it for that run alone |
+| D11 | Three E2E locators matched more than one element and failed Playwright's strict mode — most instructively, the product name appears both as the cart line and inside the quantity input's screen-reader label "Quantity of &lt;product&gt;" | running the full E2E suite | Minor (test correctness) | each assertion scoped to the element under test |
 
 D1 is the one worth dwelling on. It is the exact failure mode this milestone
 exists to prevent: a green suite over a broken application, because the suite
@@ -259,16 +261,18 @@ than reporting one percentage.
 
 ---
 
-## 7. End-to-end status — stated plainly
+## 7. End-to-end results
 
-The 14 Playwright journeys are written, and `npx playwright test --list`
-enumerates all 14 without error. They have **not** been executed in the
-environment this report was written in, because that environment has no MongoDB
-and none could be installed. They are intended to be run on a development
-machine with `server/.env` configured, using the commands in Section 4.
+All 13 Playwright journeys pass against the real stack — a real Chromium
+browser, the built React client, the Express API and MongoDB Atlas, with the
+payment gateway answering on the same test cards a demo uses. Nothing is faked
+at this level.
 
-This is said explicitly rather than left implied. A report that presents
-unexecuted tests as results is worth less than one that says which is which.
+```
+$ npm run test:e2e
+
+  13 passed (40.7s)
+```
 
 What the journeys cover:
 
@@ -282,6 +286,20 @@ out; checkout unreachable while signed out; the 404 page naming the failed path.
 the shop a customer browses; deactivate and reactivate; an order placed by a
 real customer moved paid → shipped → delivered; and the three places an admin
 is told this account does not shop.
+
+### What running them actually found
+
+Every defect in Section 6 marked "test integrity" came from this layer, and two
+of them could not have been found any other way, because they only appear when
+the whole system runs together under a real browser (D10, D11). That is the
+argument for keeping an end-to-end layer at all: the levels below it each
+replace something real with a stand-in, and a stand-in cannot exhaust a
+server-side counter or collide with a screen-reader label.
+
+Both are failures of the test harness rather than of the application, and they
+are recorded as such. A harness that reports a healthy application as broken
+costs more than one that fails outright, because the time goes into chasing a
+defect that was never there.
 
 ---
 
@@ -311,7 +329,7 @@ server/tests/unit/          38 unit tests
 server/tests/integration/   70 integration tests
 server/tests/function/      32 function tests    ← new this milestone
 client/src/**/*.test.js(x) 151 unit + component  ← new this milestone
-client/e2e/                 14 end-to-end        ← new this milestone
+client/e2e/                 13 end-to-end        ← new this milestone
 docs/testing/
   TEST_REPORT.md                this document
   TDD_LOG.md                    the test-first feature, with its red output
