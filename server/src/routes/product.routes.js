@@ -1,7 +1,6 @@
 "use strict";
 const express = require("express");
 const { body, query } = require("express-validator");
-const validator = require("validator");
 const asyncHandler = require("../utils/asyncHandler");
 const validate = require("../middleware/validate");
 const controller = require("../controllers/product.controller");
@@ -38,8 +37,16 @@ const productWriteRules = [
       .bail()
       .custom((value) => {
         const url = String(value).trim();
-        if (url.startsWith("/") && !url.startsWith("//")) return true;
-        return validator.isURL(url, { protocols: ["http", "https"], require_protocol: true });
+        // A root-relative path: /product-pictures/x.jpg. "//host/x" is
+        // excluded because it is protocol-relative, not a local path.
+        if (/^\/(?!\/)\S*$/.test(url)) return true;
+        // Otherwise it must be an absolute http(s) URL with a host.
+        try {
+          const parsed = new URL(url);
+          return (parsed.protocol === "http:" || parsed.protocol === "https:") && parsed.hostname.length > 0;
+        } catch {
+          return false;
+        }
       })
       .withMessage("Each image must be an http(s) URL or a path beginning with /"),
     body("variants").optional().isArray(),
