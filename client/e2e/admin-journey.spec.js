@@ -24,10 +24,13 @@ test.describe("running the catalogue", () => {
     const name = `E2E Gear ${unique()}`;
     await page.goto("/admin/categories");
 
-    await page.getByLabel(/name/i).fill(name);
+    await page.getByLabel(/category name/i).fill(name);
     await page.getByRole("button", { name: /add category/i }).click();
 
-    await expect(page.getByText(name)).toBeVisible();
+    // Scoped to the list. An unscoped getByText(name) matches twice - the new
+    // row AND the "<name> was added." confirmation - which Playwright's strict
+    // mode rejects. The row is the thing being asserted; the notice is not.
+    await expect(page.locator(".gv-adminc__name", { hasText: name })).toBeVisible();
   });
 
   test("a product added here appears in the shop a customer browses", async ({ page }) => {

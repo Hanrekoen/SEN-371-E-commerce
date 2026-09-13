@@ -19,7 +19,9 @@ test.describe("a new customer buys something", () => {
 
     await page.goto("/cart");
     await expect(page.getByText(product)).toBeVisible();
-    await page.getByRole("link", { name: /checkout/i }).click();
+    // The cart's checkout control is a button that navigates, not a link.
+    await page.getByRole("button", { name: /^checkout$/i }).click();
+    await expect(page).toHaveURL(/\/checkout/);
 
     await fillCheckout(page, CARD.approved);
     await page.getByRole("button", { name: /execute transaction/i }).click();
@@ -52,7 +54,8 @@ test.describe("a new customer buys something", () => {
     await expect(page.getByRole("heading", { name: /vault dispatch authorized/i })).toBeVisible();
 
     await page.goto("/orders");
-    await expect(page.getByText("paid")).toBeVisible();
+    // The status pill specifically, not "the word paid somewhere on the page".
+    await expect(page.locator(".gv-pill").first()).toHaveText("paid");
     await expect(page.getByRole("link", { name: /view receipt/i }).first()).toBeVisible();
 
     // Checkout empties the cart server-side; the navbar badge has to agree.
@@ -70,12 +73,16 @@ test.describe("when the card is declined", () => {
     await fillCheckout(page, CARD.declined);
     await page.getByRole("button", { name: /execute transaction/i }).click();
 
-    await expect(page.getByRole("alert")).toContainText(/declined/i, { timeout: 20_000 });
-    await expect(page.getByRole("alert")).toContainText(/nothing was charged/i);
+    // Scoped to the payment dialog. Once it is dismissed the checkout page
+    // shows its own danger Alert, which also carries role="alert", so an
+    // unscoped query can match two things.
+    const failure = page.getByRole("dialog").getByRole("alert");
+    await expect(failure).toContainText(/declined/i, { timeout: 20_000 });
+    await expect(failure).toContainText(/nothing was charged/i);
 
     await page.getByRole("button", { name: /back to checkout/i }).click();
     await page.goto("/cart");
-    await expect(page.getByText(product)).toBeVisible();
+    await expect(page.locator(".gv-cart__name", { hasText: product })).toBeVisible();
   });
 
 });
@@ -88,8 +95,11 @@ test.describe("signing in and out", () => {
   test("a session survives a refresh, and ends when they sign out", async ({ page }) => {
     await signIn(page, CUSTOMER);
 
+    // Still signed in after a full reload - asserted on the Sign out button,
+    // which only renders for a live session. Asserting the absence of a "Sign
+    // in" link would pass on a page that had never signed in at all.
     await page.reload();
-    await expect(page.getByRole("link", { name: /sign in/i })).toBeHidden();
+    await expect(page.getByRole("button", { name: /sign out/i })).toBeVisible();
 
     await page.getByRole("button", { name: /sign out/i }).click();
     await expect(page.getByRole("link", { name: /sign in/i })).toBeVisible();

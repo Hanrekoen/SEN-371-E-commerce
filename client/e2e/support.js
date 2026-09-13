@@ -36,7 +36,13 @@ export async function signIn(page, { email, password }) {
   await page.getByLabel(/email address/i).fill(email);
   await page.getByLabel(/^password$/i).fill(password);
   await page.getByRole("button", { name: /^sign in$/i }).click();
-  await expect(page.getByRole("link", { name: /sign in/i })).toBeHidden();
+
+  // Wait for something that exists ONLY once signed in. The obvious
+  // alternative - asserting the "Sign in" link has gone - passes instantly and
+  // wrongly, because Playwright treats "not in the DOM at all" as hidden, and
+  // on the login page there is no such link to begin with. That let the next
+  // step run against a page whose login request was still in flight.
+  await expect(page.getByRole("button", { name: /sign out/i })).toBeVisible();
 }
 
 export async function registerNewAccount(page, account = newAccount()) {
@@ -47,7 +53,9 @@ export async function registerNewAccount(page, account = newAccount()) {
   await page.getByLabel(/email address/i).fill(account.email);
   await page.getByLabel(/^password$/i).fill(account.password);
   await page.getByRole("button", { name: /create account/i }).click();
-  await expect(page).toHaveURL(/\/$/);
+  // Same reasoning as signIn: wait for proof of a session, not for the absence
+  // of something that was never there.
+  await expect(page.getByRole("button", { name: /sign out/i })).toBeVisible();
   return account;
 }
 
