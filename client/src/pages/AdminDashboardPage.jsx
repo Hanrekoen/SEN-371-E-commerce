@@ -7,6 +7,7 @@ import StatusPill from "../components/ui/StatusPill";
 import { getStats, adjustStock, updateOrderStatus } from "../api/admin.api";
 import { formatCents, formatCentsCompact } from "../utils/money";
 import { summaryMessage } from "../utils/apiErrors";
+import { withBase, onImageError } from "../utils/productImage";
 import "./AdminDashboardPage.css";
 
 const RESTOCK_UNITS = 25;
@@ -180,8 +181,13 @@ export default function AdminDashboardPage() {
             <ul className="gv-admin__stock">
               {stats.lowStock.map((p) => (
                 <li key={p.id}>
+                  {/* withBase, like every other product picture in the app.
+                      The stored path is root-relative, so without it this
+                      resolves against the domain root and breaks wherever the
+                      app is not served from "/". */}
                   {p.image
-                    ? <img src={p.image} alt="" className="gv-admin__thumb" loading="lazy" />
+                    ? <img src={withBase(p.image)} alt="" className="gv-admin__thumb"
+                           loading="lazy" onError={onImageError} />
                     : <span className="gv-admin__thumb gv-admin__thumb--blank" aria-hidden="true" />}
                   <div className="gv-admin__stock-copy">
                     <p className="gv-admin__stock-name">{p.name}</p>
