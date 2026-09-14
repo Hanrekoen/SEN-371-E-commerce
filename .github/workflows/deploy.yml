@@ -1,0 +1,82 @@
+name: Deploy client to GitHub Pages
+
+# Builds client/ and publishes it to GitHub Pages on every push to main, and
+# on demand from the Actions tab.
+#
+# The API is NOT deployed here - it lives on Render, which watches the same
+# repository and redeploys itself. See docs/DEPLOYMENT.md.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Pages needs these; the defaults are read-only.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time. A queued run waits rather than racing a live one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install
+        working-directory: client
+        run: npm ci
+
+      - name: Build
+        working-directory: client
+        env:
+          # A project Pages site is served from /<repo-name>/. Taking it from
+          # the repository name means nothing breaks if the repo is renamed
+          # or forked.
+          VITE_BASE: /${{ github.event.repository.name }}/
+          # Vite inlines env vars at BUILD time, so this has to be present
+          # here - setting it on the server later would do nothing. It is a
+          # repository variable, not a secret: it ends up in the bundle, which
+          # anyone can read.
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          test -n "$VITE_API_BASE_URL" || {
+            echo "::error::VITE_API_BASE_URL is not set. Add it under"
+            echo "::error::Settings > Secrets and variables > Actions > Variables."
+            exit 1
+          }
+          npm run build
+
+      # GitHub Pages knows nothing about client-side routes: a visitor landing
+      # on /product/whatever, or refreshing there, asks the server for a file
+      # that does not exist and gets GitHub's own 404 page. Serving the app
+      # itself as the 404 means React Router boots and reads the URL, and the
+      # address bar is left untouched.
+      - name: SPA fallback
+        working-directory: client
+        run: cp dist/index.html dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: client/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
