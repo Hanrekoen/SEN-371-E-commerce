@@ -3,6 +3,13 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+
+  // GitHub Pages serves a project site from /<repo-name>/, not from /. Every
+  // asset URL is built against this, so getting it wrong gives a blank page
+  // and a console full of 404s. The deploy workflow sets VITE_BASE from the
+  // repository name automatically; locally it stays "/" and nothing changes.
+  base: process.env.VITE_BASE || "/",
+
   server: {
     port: 5173,
   },

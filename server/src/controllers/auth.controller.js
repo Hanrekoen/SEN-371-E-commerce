@@ -17,18 +17,47 @@ const env = require("../config/env");
 
 const REFRESH_COOKIE = "refreshToken";
 
+/**
+ * SameSite, and why it has to change once this is deployed.
+ *
+ * In development the client and the API are both on localhost, which the
+ * browser treats as one site. "strict" works there and gives free CSRF
+ * protection: the cookie is never sent on a request that originated anywhere
+ * else.
+ *
+ * Deployed, the client is on GitHub Pages and the API is on Render. Those are
+ * different sites, so a "strict" cookie is neither stored nor sent - sign-in
+ * appears to succeed and then every page refresh signs the user out again.
+ * Cross-site cookies need sameSite "none", and browsers only accept "none"
+ * together with secure, so the API must be served over HTTPS (Render is).
+ *
+ * What that costs: "none" gives up the CSRF protection "strict" was providing.
+ * What remains is that the cookie is httpOnly so JavaScript cannot read it,
+ * that it is scoped to /api/auth so it rides on no other request, and that
+ * CORS admits exactly one origin. A system moving real money would add a CSRF
+ * token on top of that; this is a prototype with a simulated gateway, and the
+ * trade is written down here rather than left for someone to discover.
+ */
+function cookieOptions() {
+  const crossSite = env.isProduction;
+  return {
+    httpOnly: true,
+    secure: crossSite,
+    sameSite: crossSite ? "none" : "strict",
+    path: "/api/auth", // only sent back to auth endpoints, not every request
+  };
+}
+
 function setRefreshCookie(res, token) {
   res.cookie(REFRESH_COOKIE, token, {
-    httpOnly: true,
-    secure: env.isProduction,
-    sameSite: "strict",
-    path: "/api/auth", // only sent back to auth endpoints, not every request
+    ...cookieOptions(),
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7d - keep in sync with REFRESH_TOKEN_TTL
   });
 }
 
+// The options must match the ones it was set with, or the browser keeps it.
 function clearRefreshCookie(res) {
-  res.clearCookie(REFRESH_COOKIE, { path: "/api/auth" });
+  res.clearCookie(REFRESH_COOKIE, cookieOptions());
 }
 
 async function register(req, res) {
