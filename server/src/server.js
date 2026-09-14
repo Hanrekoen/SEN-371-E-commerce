@@ -23,7 +23,13 @@ function startGateway() {
   }
 
   const gatewayApp = require("./gateway/app");
-  const server = gatewayApp.listen(env.payment.gatewayPort, () =>
+
+  // Bound to the loopback interface rather than 0.0.0.0. Only this process
+  // ever calls it, so it has no business being reachable from outside the
+  // machine - and on a managed host the platform's port scanner finds a
+  // second externally-bound port and logs it every minute as a new open port,
+  // which is noise at best and a routing mistake at worst.
+  const server = gatewayApp.listen(env.payment.gatewayPort, "127.0.0.1", () =>
     console.log("[gateway] mock payment gateway on http://localhost:" + env.payment.gatewayPort)
   );
 
