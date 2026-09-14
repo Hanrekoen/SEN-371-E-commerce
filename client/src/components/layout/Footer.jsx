@@ -10,17 +10,15 @@ const COLUMNS = [
       { label: "Cameras", to: "/catalog?category=cameras" },
       { label: "Wearables", to: "/catalog?category=wearables" },
   ]},
+  // Only destinations that exist. Warranty, guides, blog and affiliates were
+  // links to pages nobody had built, so every one of them landed on the 404.
   { title: "Support", links: [
       { label: "Track Order", to: "/orders" },
-      { label: "Warranty & Returns", to: "/support/warranty" },
-      { label: "User Guides", to: "/support/guides" },
       { label: "Contact Vault", to: "/support/contact" },
   ]},
   { title: "Company", links: [
       { label: "About Us", to: "/about" },
-      { label: "Editorial Blog", to: "/blog" },
       { label: "Our Makers", to: "/makers" },
-      { label: "Affiliates", to: "/affiliates" },
   ]},
 ];
 

@@ -33,16 +33,10 @@
 
 .gv-pcard__body { padding: var(--gv-4); display: flex; flex-direction: column; gap: var(--gv-2); flex: 1; }
 
-.gv-pcard__meta { display: flex; align-items: center; justify-content: space-between; }
 .gv-pcard__category {
   color: var(--gv-primary);
   font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
 }
-.gv-pcard__rating {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: var(--gv-fs-xs); font-weight: 600; color: var(--gv-text);
-}
-.gv-pcard__rating svg { color: var(--gv-warning); }
 
 .gv-pcard__name {
   font-size: var(--gv-fs-md);

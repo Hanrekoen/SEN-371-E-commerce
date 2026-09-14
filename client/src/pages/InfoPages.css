@@ -1,0 +1,148 @@
+/* Shared layout for the three static pages: About, Our Makers, Contact. */
+
+.gv-page.gv-info {
+  padding-block: var(--gv-16) var(--gv-16);
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.gv-info__eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gv-primary);
+}
+
+.gv-info__title {
+  margin-top: var(--gv-3);
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.gv-info__lead {
+  margin-top: var(--gv-4);
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--gv-text-muted);
+}
+
+.gv-info__body > p {
+  margin-top: var(--gv-4);
+  line-height: 1.7;
+  color: var(--gv-text-muted);
+}
+
+.gv-info__section {
+  margin-top: var(--gv-10);
+}
+
+.gv-info__section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: var(--gv-4);
+}
+
+/* --- Our Makers --- */
+
+.gv-info__makers {
+  display: grid;
+  gap: var(--gv-3);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.gv-info__maker {
+  padding: var(--gv-4) var(--gv-5);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-lg);
+  background: var(--gv-surface);
+}
+
+.gv-info__maker-name {
+  font-weight: 600;
+}
+
+.gv-info__maker-name a {
+  color: var(--gv-primary);
+  text-decoration: none;
+}
+
+.gv-info__maker-name a:hover,
+.gv-info__maker-name a:focus-visible {
+  text-decoration: underline;
+}
+
+.gv-info__maker-role {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--gv-text-muted);
+}
+
+/* --- Contact --- */
+
+.gv-info__contact {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-lg);
+  background: var(--gv-surface);
+  overflow: hidden;
+}
+
+.gv-info__contact > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gv-2) var(--gv-6);
+  padding: var(--gv-4) var(--gv-5);
+  border-bottom: 1px solid var(--gv-border);
+}
+
+.gv-info__contact > div:last-child {
+  border-bottom: 0;
+}
+
+.gv-info__contact dt {
+  flex: 0 0 140px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gv-text-muted);
+}
+
+.gv-info__contact dd {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.gv-info__contact a {
+  color: var(--gv-primary);
+  text-decoration: none;
+}
+
+.gv-info__contact a:hover,
+.gv-info__contact a:focus-visible {
+  text-decoration: underline;
+}
+
+.gv-info__note {
+  margin-top: var(--gv-6);
+  padding: var(--gv-4) var(--gv-5);
+  border-left: 3px solid var(--gv-primary);
+  border-radius: 0 var(--gv-r-lg) var(--gv-r-lg) 0;
+  background: var(--gv-surface);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--gv-text-muted);
+}
+
+.gv-info__actions {
+  margin-top: var(--gv-10);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gv-3);
+}

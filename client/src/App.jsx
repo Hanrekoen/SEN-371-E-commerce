@@ -11,6 +11,9 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminProductsPage from "./pages/AdminProductsPage";
 import AdminCategoriesPage from "./pages/AdminCategoriesPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import AboutPage from "./pages/AboutPage";
+import MakersPage from "./pages/MakersPage";
+import ContactPage from "./pages/ContactPage";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import OrderHistory from "./pages/OrderHistory";
@@ -27,6 +30,10 @@ export default function App() {
         <Route path="orders" element={<RequireAuth><OrderHistory /></RequireAuth>} />
 
         <Route path="login" element={<LoginPage />} />
+
+        <Route path="about" element={<AboutPage />} />
+        <Route path="makers" element={<MakersPage />} />
+        <Route path="support/contact" element={<ContactPage />} />
 
         <Route path="checkout" element={<RequireShopper><CheckoutPage /></RequireShopper>} />
 

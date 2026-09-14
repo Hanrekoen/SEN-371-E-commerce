@@ -1,5 +1,4 @@
 import { Link, useNavigate } from "react-router-dom";
-import { StarIcon } from "../ui/Icons";
 import { formatCentsCompact } from "../../utils/money";
 import { productImage, onImageError } from "../../utils/productImage";
 import { useAuth } from "../../context/AuthContext";
@@ -35,13 +34,7 @@ export default function ProductCard({ product }) {
 
 
       <div className="gv-pcard__body">
-        <div className="gv-pcard__meta">
-          <span className="gv-pcard__category">{product.category?.name}</span>
-          <span className="gv-pcard__rating">
-            <StarIcon /> {product.ratingAverage?.toFixed(1) ?? "0.0"}
-            <span className="gv-muted"> ({product.ratingCount ?? 0})</span>
-          </span>
-        </div>
+        <span className="gv-pcard__category">{product.category?.name}</span>
 
         <h3 className="gv-pcard__name">{product.name}</h3>
 
