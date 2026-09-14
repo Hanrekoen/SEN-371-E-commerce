@@ -12,10 +12,11 @@ const LINKS = [
   // The Figma nav lists every frame, this one included. It points at a
   // representative product rather than a real "product detail" section.
   { to: "/product/obsidian-x-9-headset", label: "Product Detail" },
-  // Admins administer the shop rather than buying from it, and the API
-  // refuses their orders, so they are not offered a way to try.
-  { to: "/cart", label: "Cart", shopper: true },
-  { to: "/checkout", label: "Checkout", shopper: true },
+  // No Cart or Checkout link here. The cart icon on the right already goes to
+  // the cart and carries the item count, and checkout is reached from the cart
+  // - a second route into the same two pages is clutter, not convenience. The
+  // icon is also hidden from admins, so the rule that they do not shop still
+  // holds without a per-link exception.
 ];
 
 const ADMIN_LINKS = [
@@ -66,7 +67,7 @@ export default function Navbar() {
 
         <div id="gv-nav-panel" ref={panelRef} className={`gv-nav__panel ${open ? "is-open" : ""}`}>
           <nav className="gv-nav__links" aria-label="Primary">
-            {LINKS.filter((l) => !(l.shopper && isAdmin)).map((l) => (
+            {LINKS.map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
