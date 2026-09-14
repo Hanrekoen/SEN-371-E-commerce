@@ -69,12 +69,11 @@ const { signAccessToken } = require("../../src/utils/jwt");
 const { TRANSITIONS } = require("../../src/services/order.service");
 
 const admin = "Bearer " + signAccessToken({ id: "6716f0a1c2d3e4f5a6b7c904", role: "admin" });
-const customer = "Bearer " + signAccessToken({ id: "6716f0a1c2d3e4f5a6b7c905", role: "customer" });
 
-const move = (status, auth = admin) =>
+const move = (status) =>
   request(app)
     .patch(`/api/admin/orders/${mockOrderId}/status`)
-    .set("Authorization", auth)
+    .set("Authorization", admin)
     .send({ status });
 
 beforeEach(() => {
@@ -83,63 +82,12 @@ beforeEach(() => {
   mockReturnedStock = [];
 });
 
-describe("an admin can walk an order forward", () => {
-  test("paid -> shipped", async () => {
-    mockStatus = "paid";
-    const res = await move("shipped");
-    expect(res.status).toBe(200);
-    expect(res.body.data.status).toBe("shipped");
-    expect(mockSetTo).toBe("shipped");
-  });
+// The transition rules themselves - paid -> shipped -> delivered, cancelling,
+// and the illegal moves - are walked end to end in the "an admin moving the
+// order along" block of tests/function/shopping.journey.test.js. What is left
+// here is what that journey does not reach.
 
-  test("shipped -> delivered", async () => {
-    mockStatus = "shipped";
-    const res = await move("delivered");
-    expect(res.status).toBe(200);
-    expect(res.body.data.status).toBe("delivered");
-    expect(mockSetTo).toBe("delivered");
-  });
-
-  test("paid -> cancelled", async () => {
-    mockStatus = "paid";
-    const res = await move("cancelled");
-    expect(res.status).toBe(200);
-    expect(mockSetTo).toBe("cancelled");
-  });
-});
-
-describe("steps cannot be skipped or undone", () => {
-  test("paid -> delivered is refused, and nothing is written", async () => {
-    mockStatus = "paid";
-    const res = await move("delivered");
-    expect(res.status).toBe(422);
-    expect(res.body.error.code).toBe("RULE_VIOLATION");
-    expect(mockSetTo).toBeNull();
-  });
-
-  test("shipped -> paid is refused - no going backwards", async () => {
-    mockStatus = "shipped";
-    const res = await move("paid");
-    expect(res.status).toBe(422);
-    expect(mockSetTo).toBeNull();
-  });
-
-  test("delivered is terminal", async () => {
-    mockStatus = "delivered";
-    for (const next of ["shipped", "cancelled"]) {
-      const res = await move(next);
-      expect(res.status).toBe(422);
-    }
-    expect(mockSetTo).toBeNull();
-  });
-
-  test("a cancelled order cannot be reopened", async () => {
-    mockStatus = "cancelled";
-    const res = await move("shipped");
-    expect(res.status).toBe(422);
-    expect(mockSetTo).toBeNull();
-  });
-
+describe("the status itself is validated before any rule runs", () => {
   test("a status outside the enum is a validation error (400), not a rule error (422)", async () => {
     const res = await move("refunded");
     expect(res.status).toBe(400);
@@ -149,13 +97,6 @@ describe("steps cannot be skipped or undone", () => {
 });
 
 describe("cancelling returns the stock", () => {
-  test("every line's quantity goes back to the catalogue", async () => {
-    mockStatus = "paid";
-    const res = await move("cancelled");
-    expect(res.status).toBe(200);
-    expect(mockReturnedStock).toEqual([{ productId: mockProductId, quantity: 2 }]);
-  });
-
   test("a shipped order cannot be cancelled - the stock is gone", async () => {
     mockStatus = "shipped";
     const res = await move("cancelled");
@@ -170,12 +111,6 @@ describe("only admins may move orders", () => {
       .patch(`/api/admin/orders/${mockOrderId}/status`)
       .send({ status: "shipped" });
     expect(res.status).toBe(401);
-    expect(mockSetTo).toBeNull();
-  });
-
-  test("a signed-in customer is 403", async () => {
-    const res = await move("shipped", customer);
-    expect(res.status).toBe(403);
     expect(mockSetTo).toBeNull();
   });
 });

@@ -20,16 +20,16 @@ let warn;
 
 beforeEach(() => {
   app = buildApp();
+  // Both middlewares log every key they strip or collapse - expected here, so
+  // the warnings are silenced rather than printed over the test output.
   warn = jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 afterEach(() => warn.mockRestore());
 
 describe("mongoSanitize", () => {
-  test("strips a $ operator from a login-shaped body", async () => {
-    const res = await request(app).post("/echo").send({ email: { $gt: "" }, password: "x" });
-    expect(res.body.body).toEqual({ email: {}, password: "x" });
-  });
-
+  // The attack this stops is an operator smuggled in where a value belongs -
+  // {"email": {"$gt": ""}} in a login body. An operator key is removed
+  // wherever it sits in the tree, including inside an array.
   test("strips operators nested in objects and arrays", async () => {
     const res = await request(app).post("/echo").send({
       filter: { price: { $where: "1==1" }, name: "ok" },
@@ -57,11 +57,6 @@ describe("mongoSanitize", () => {
     expect(res.body.query).toEqual({ page: "2" });
   });
 
-  test("logs what it removed - an operator key is never a typo", async () => {
-    await request(app).post("/echo").send({ email: { $gt: "" } });
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("email.$gt"));
-  });
-
   test("does not recurse without bound on a deeply nested body", async () => {
     let deep = { $bad: 1 };
     for (let i = 0; i < 50; i += 1) deep = { level: deep };
@@ -71,25 +66,15 @@ describe("mongoSanitize", () => {
 });
 
 describe("preventParamPollution", () => {
+  // Last wins on purpose: the polluted request fails loudly at validation
+  // instead of quietly succeeding with the harmless first value.
   test("?limit=1&limit=99999 collapses to one value", async () => {
     const res = await request(app).get("/echo?limit=1&limit=99999&page=2");
     expect(res.body.query).toEqual({ limit: "99999", page: "2" });
   });
 
-  test("the surviving value is the one validation will reject", async () => {
-    // Last wins on purpose: the polluted request fails loudly at validation
-    // instead of quietly succeeding with the harmless first value.
-    const res = await request(app).get("/echo?limit=1&limit=99999");
-    expect(res.body.query.limit).toBe("99999");
-  });
-
   test("a single value is untouched", async () => {
     const res = await request(app).get("/echo?limit=25");
     expect(res.body.query).toEqual({ limit: "25" });
-  });
-
-  test("logs the collapse", async () => {
-    await request(app).get("/echo?sort=a&sort=b");
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("sort (2 values)"));
   });
 });

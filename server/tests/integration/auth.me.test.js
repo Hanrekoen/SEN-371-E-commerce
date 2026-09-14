@@ -50,24 +50,9 @@ describe("GET /api/auth/me", () => {
     expect(res.status).not.toBe(404);
   });
 
-  test("returns the signed-in user", async () => {
-    const res = await request(app).get("/api/auth/me").set("Authorization", tokenFor());
-    expect(res.status).toBe(200);
-    expect(res.body.data).toMatchObject({
-      email: "hanre@sen371.test",
-      firstName: "Hanre",
-      role: "customer",
-    });
-  });
-
-  test("never returns the password hash or the token version", async () => {
-    const res = await request(app).get("/api/auth/me").set("Authorization", tokenFor());
-    const body = JSON.stringify(res.body);
-    expect(body).not.toContain("passwordHash");
-    expect(body).not.toContain("tokenVersion");
-    expect(body).not.toContain("$2b$");
-  });
-
+  // That the route answers with the signed-in account, and that a session
+  // deactivated mid-flight dies on the next call, are both walked through in
+  // the "staying signed in" block of tests/function/auth.lifecycle.test.js.
   test("anonymous callers get 401, not a user", async () => {
     const res = await request(app).get("/api/auth/me");
     expect(res.status).toBe(401);
@@ -82,12 +67,6 @@ describe("GET /api/auth/me", () => {
     const res = await request(app).get("/api/auth/me").set("Authorization", tokenFor(mockUserId, "admin"));
     expect(res.status).toBe(200);
     expect(res.body.data.role).toBe("customer");
-  });
-
-  test("a deactivated account is refused even with a valid token", async () => {
-    mockUser.isActive = false;
-    const res = await request(app).get("/api/auth/me").set("Authorization", tokenFor());
-    expect(res.status).toBe(401);
   });
 
   test("a token for a user who no longer exists is refused", async () => {

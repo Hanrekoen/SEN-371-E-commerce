@@ -21,6 +21,7 @@ const LINKS = [
 const ADMIN_LINKS = [
   { to: "/admin", label: "Admin", end: true },
   { to: "/admin/products", label: "Manage Catalogue" },
+  { to: "/admin/categories", label: "Categories" },
 ];
 
 export default function Navbar() {

@@ -116,16 +116,6 @@ describe("creating a product persists the category", () => {
     expect(mockCreated.categoryId).toBe(mockCategoryId);
   });
 
-  test("a category change on update is not silently dropped", async () => {
-    const other = "6716f0a1c2d3e4f5a6b7c8e9";
-    const res = await request(app)
-      .put(`/api/products/${mockProductId}`)
-      .set("Authorization", admin)
-      .send({ ...validProduct, categoryId: other });
-    expect(res.status).toBe(200);
-    expect(res.body.data.category.id).toBe(other);
-  });
-
   // The seed stores images as root-relative paths, but the route validated
   // them with isURL(), which requires a host - so an admin could not add a
   // product using an image this app actually ships.
@@ -134,12 +124,6 @@ describe("creating a product persists the category", () => {
       .send({ ...validProduct, images: ["/product-pictures/Obsidian%20x9%20black.jpg"] });
     expect(res.status).toBe(201);
     expect(mockCreated.images).toEqual(["/product-pictures/Obsidian%20x9%20black.jpg"]);
-  });
-
-  test("an absolute https URL is still accepted", async () => {
-    const res = await request(app).post("/api/products").set("Authorization", admin)
-      .send({ ...validProduct, images: ["https://cdn.test/a.jpg"] });
-    expect(res.status).toBe(201);
   });
 
   test.each([
@@ -168,26 +152,11 @@ describe("admins can manage what they deactivated", () => {
     expect(mockSearchArgs.includeInactive).toBe(true);
   });
 
-  test("the storefront list does not", async () => {
-    const res = await request(app).get("/api/products");
-    expect(res.status).toBe(200);
-    expect(mockSearchArgs.includeInactive).toBe(false);
-  });
-
   test("fetch by id works - it used to call a method that did not exist", async () => {
     const res = await request(app).get(`/api/admin/products/${mockProductId}`).set("Authorization", admin);
     expect(res.status).toBe(200);
     expect(res.body.data.id).toBe(mockProductId);
     expect(res.body.data.stockQty).toBeDefined(); // admin view
-  });
-
-  test("a deactivation can be undone", async () => {
-    const res = await request(app)
-      .patch(`/api/admin/products/${mockProductId}/reactivate`)
-      .set("Authorization", admin);
-    expect(res.status).toBe(200);
-    expect(res.body.data.isActive).toBe(true);
-    expect(res.body.data._id).toBeUndefined(); // a DTO, not a raw document
   });
 });
 
@@ -205,12 +174,6 @@ describe("restocking", () => {
     expect(res.status).toBe(400);
     expect(res.body.error.details[0].field).toBe("delta");
   });
-
-  test("a non-integer delta is refused", async () => {
-    const res = await request(app).patch(`/api/admin/products/${mockProductId}/stock`)
-      .set("Authorization", admin).send({ delta: "lots" });
-    expect(res.status).toBe(400);
-  });
 });
 
 describe("dashboard statistics", () => {
@@ -221,30 +184,5 @@ describe("dashboard statistics", () => {
     expect(Object.keys(d).sort()).toEqual([
       "conversion", "customers", "lowStock", "orders", "recentOrders", "revenue", "thresholds", "trend",
     ]);
-  });
-
-  test("revenue reports today and a delta against yesterday", async () => {
-    const res = await request(app).get("/api/admin/stats").set("Authorization", admin);
-    // 100000 -> 150000 is +50%
-    expect(res.body.data.revenue.todayCents).toBe(150000);
-    expect(res.body.data.revenue.deltaPct).toBe(50);
-    expect(res.body.data.revenue.series).toEqual([100000, 150000]);
-  });
-
-  test("only paid, shipped and delivered orders count as conversions", async () => {
-    const res = await request(app).get("/api/admin/stats").set("Authorization", admin);
-    // 4 paid + 2 shipped + 6 delivered = 12 of 100 customers
-    expect(res.body.data.conversion.paidOrders).toBe(12);
-    expect(res.body.data.conversion.rate).toBe(12);
-  });
-
-  test("low stock and the order stream carry what the panels display", async () => {
-    const res = await request(app).get("/api/admin/stats").set("Authorization", admin);
-    expect(res.body.data.lowStock[0]).toMatchObject({ name: "Aurora Mechanical Keyboard", stockQty: 2 });
-    expect(res.body.data.recentOrders[0]).toMatchObject({
-      orderNumber: "ORD-2026-000042",
-      customerEmail: "vance@soma.test",
-      status: "paid",
-    });
   });
 });

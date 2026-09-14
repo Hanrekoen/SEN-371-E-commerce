@@ -32,13 +32,6 @@ beforeEach(() => {
 
 describe("cart service", () => {
   // FR-06
-  test("adds a new item to an empty cart", async () => {
-    cartRepository.findOrCreateByUser.mockResolvedValue(fakeCart([]));
-    const result = await cartService.addItem("u1", { productId: "p1", quantity: 2 });
-    expect(result.lines).toHaveLength(1);
-    expect(result.lines[0].quantity).toBe(2);
-  });
-
   test("adding the same product twice merges into one line", async () => {
     cartRepository.findOrCreateByUser.mockResolvedValue(
       fakeCart([{ productId: "p1", quantity: 2, finish: "Obsidian Black" }])
@@ -55,14 +48,8 @@ describe("cart service", () => {
     ).rejects.toThrow(/greater than 0/);
   });
 
-  // FR-06: quantity cannot exceed available stock
-  test("rejects an amount that would exceed stock", async () => {
-    cartRepository.findOrCreateByUser.mockResolvedValue(fakeCart([]));
-    await expect(
-      cartService.addItem("u1", { productId: "p1", quantity: 11 })
-    ).rejects.toThrow(/left in stock/);
-  });
-
+  // FR-06: quantity cannot exceed available stock, and the amount already in
+  // the cart counts towards it - otherwise repeated adds walk past the limit.
   test("counts what is already in the cart when checking stock", async () => {
     cartRepository.findOrCreateByUser.mockResolvedValue(
       fakeCart([{ productId: "p1", quantity: 9 }])

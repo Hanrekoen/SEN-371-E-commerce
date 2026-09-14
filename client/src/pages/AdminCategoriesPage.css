@@ -1,0 +1,77 @@
+.gv-page.gv-adminc {
+  padding-block: var(--gv-10) var(--gv-16);
+  max-width: 760px;
+  margin-inline: auto;
+  display: grid;
+  gap: var(--gv-5);
+}
+.gv-adminc > * { min-width: 0; }
+
+.gv-page.gv-adminc--message { padding-block: var(--gv-20); color: var(--gv-text-dim); }
+
+.gv-adminc__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gv-5);
+  flex-wrap: wrap;
+}
+.gv-adminc__head h1 { font-size: clamp(26px, 3.2vw, 36px); font-weight: 700; }
+.gv-adminc__head-actions { display: flex; flex-wrap: wrap; gap: var(--gv-3); }
+
+/* The field grows, the button keeps its own width and sits on the input's
+   baseline rather than stretching to the label's height. */
+.gv-adminc__form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gv-3);
+  flex-wrap: wrap;
+  padding: var(--gv-5);
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-lg);
+}
+.gv-adminc__form .gv-field { flex: 1 1 260px; }
+
+.gv-adminc__empty {
+  padding: var(--gv-10) var(--gv-6);
+  text-align: center;
+  background: var(--gv-surface);
+  border: 1px dashed var(--gv-border);
+  border-radius: var(--gv-r-lg);
+}
+.gv-adminc__empty-title { font-weight: 700; margin-bottom: var(--gv-2); }
+
+.gv-adminc__list { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--gv-3); }
+
+.gv-adminc__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gv-4);
+  padding: var(--gv-4) var(--gv-5);
+  background: var(--gv-surface);
+  border: 1px solid var(--gv-border);
+  border-radius: var(--gv-r-md);
+}
+.gv-adminc__info { min-width: 0; }
+.gv-adminc__name { font-weight: 600; }
+.gv-adminc__slug {
+  margin-top: 2px;
+  color: var(--gv-text-dim);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: var(--gv-fs-xs);
+  overflow-wrap: anywhere;
+}
+.gv-adminc__desc {
+  margin-top: var(--gv-1);
+  color: var(--gv-text-muted);
+  font-size: var(--gv-fs-sm);
+}
+
+@media (max-width: 560px) {
+  .gv-adminc__head-actions { width: 100%; }
+  .gv-adminc__head-actions > * { flex: 1 1 140px; min-width: 0; }
+  .gv-adminc__form .gv-btn { flex: 1 1 100%; }
+  .gv-adminc__item { flex-direction: column; align-items: stretch; }
+}

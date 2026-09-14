@@ -19,6 +19,7 @@ module.exports = {
   // Off by default: trusting X-Forwarded-For with no proxy in front lets a
   // client spoof its IP and get a fresh rate-limit bucket per request.
   trustProxy: process.env.TRUST_PROXY === "true" ? 1 : Number(process.env.TRUST_PROXY) || false,
+
   mongoUri: process.env.MONGODB_URI,
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET,

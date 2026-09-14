@@ -62,6 +62,14 @@ export default function SecurePayOverlay({ open, amountCents, card, run, onAppro
       // they do not gate the call.
       const pending = run();
 
+      // Attach a handler now, not at the await below. The two pacing waits
+      // mean a fast failure can settle this promise before anything is
+      // listening, and a rejection with no handler yet is reported as an
+      // unhandled rejection - noise in the console during a decline, which is
+      // a path customers genuinely hit. The real handling still happens in
+      // the try/catch; this only makes sure the rejection is never orphaned.
+      pending.catch(() => {});
+
       // Steps 0 and 1 are the round trip getting under way, so they can be
       // shown on a timer. Step 2 is the authorisation itself and must wait
       // for the actual answer - anything else would be claiming an outcome
