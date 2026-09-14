@@ -10,26 +10,11 @@ function reject(message) {
   return (_req, _res, next) => next(new TooManyRequestsError(message));
 }
 
-/**
- * All three tiers share this.
- *
- * Two situations switch limiting off, and they are different situations:
- *
- * 1. Jest. NODE_ENV is "test" and the suite would otherwise trip these
- *    mid-run. app.security.test.js sets RATE_LIMIT_IN_TESTS=true to turn
- *    them back on, because it is the suite that tests limiting.
- *
- * 2. The end-to-end suite. It drives the REAL server, so NODE_ENV is not
- *    "test" and every tier is live - but thirteen browser journeys from one
- *    IP spend a few hundred requests between them, and the global tier
- *    allows 300 per fifteen minutes. The suite exhausts the budget partway
- *    through and every later request comes back 429, which reads as the
- *    application being broken when it is behaving exactly as designed.
- *    playwright.config.js sets RATE_LIMIT_DISABLED=true for that run alone.
- *
- * Limiting is never off by accident: both paths need an explicit signal, and
- * neither is reachable in a normal deployment.
- */
+// Two explicit off-switches, so limiting is never off by accident: Jest would trip
+// these mid-run (app.security.test.js sets RATE_LIMIT_IN_TESTS=true to re-enable,
+// since it tests limiting), and the E2E suite drives the real server where its
+// browser journeys from one IP exhaust the 300/15min global budget and everything
+// after 429s - playwright.config.js sets RATE_LIMIT_DISABLED=true for that run.
 const skipRateLimiting = () =>
   process.env.RATE_LIMIT_DISABLED === "true" ||
   (env.nodeEnv === "test" && process.env.RATE_LIMIT_IN_TESTS !== "true");
@@ -63,10 +48,7 @@ function isMutating(req) {
          req.method === "PATCH" || req.method === "DELETE";
 }
 
-// Tier 3 is the login limiter, kept in auth.routes.js next to the endpoint -
-// but it shares reject() and skipRateLimiting() from here, so all three tiers
-// answer in the same envelope and all three are switched off in tests by the
-// same flag. It used to define its own message and no skip, which meant any
-// suite signing in more than ten times started failing on a 429 that had
-// nothing to do with what it was testing.
+// Tier 3 (login) lives in auth.routes.js but imports reject/skipRateLimiting from
+// here, so all three tiers share one envelope and one off-switch. When it had its
+// own, any suite signing in more than ten times failed on an unrelated 429.
 module.exports = { apiLimiter, writeLimiter, WINDOW_MS, reject, skipRateLimiting };

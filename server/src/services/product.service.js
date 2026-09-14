@@ -3,11 +3,8 @@ const productRepository = require("../repositories/product.repository");
 const { NotFoundError, ConflictError } = require("../errors/AppError");
 const { toProductDTO, toProductListDTO } = require("../dtos/product.dto");
 
-/**
- * Business rules for products.
- * No req, no res, no Mongoose. Only repositories and error classes.
- * That is what makes this file unit-testable with a fake repository.
- */
+// Product business rules. No req, res or Mongoose - only repositories and error
+// classes - which is what makes this unit-testable with a fake repository.
 
 const WRITABLE_FIELDS = [
     "name", "slug", "sku", "brand", "description", "priceCents",

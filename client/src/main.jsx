@@ -8,9 +8,9 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./styles/bootstrap-theme.css";
 import "./styles/base.css";
 
-// import.meta.env.BASE_URL is whatever Vite's `base` was at build time: "/"
-// locally, "/<repo-name>/" on GitHub Pages. Without it the router would read
-// the repo name as the first path segment and match no route at all.
+// basename must be Vite's build-time `base` ("/<repo-name>/" on Pages);
+// without it the router reads the repo name as a path segment and matches
+// no route at all.
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter basename={import.meta.env.BASE_URL}>

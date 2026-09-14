@@ -2,10 +2,9 @@
 
 // PERSON 2 OWNS THIS FILE.
 //
-// express-mongo-sanitize and hpp both reassign req.query, which Express 5
-// defines as a getter with no setter, so both throw on the first request
-// (verified against express 5.2.1). Object.defineProperty is the fix, and
-// sixty lines here beats two dependencies - see docs/SECURITY.md, A03.
+// Hand-rolled because express-mongo-sanitize and hpp both reassign req.query, a
+// getter with no setter in Express 5, so both throw on the first request (checked
+// against 5.2.1). Object.defineProperty is the fix. See docs/SECURITY.md, A03.
 
 const FORBIDDEN_KEY = /^\$|\./;
 const MAX_DEPTH = 10; // a deeply nested body is a cheap way to burn CPU

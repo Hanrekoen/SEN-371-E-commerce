@@ -52,10 +52,8 @@ export default function ProductDetail() {
   // Clear the pending "added" message if the page goes away first.
   useEffect(() => () => clearTimeout(addedTimer.current), []);
 
-  // The public product DTO exposes `inStock` as a boolean, never the count -
-  // stock levels are commercially sensitive and only admins get stockQty. So
-  // availability is read from inStock, and the quantity cap is a plain limit
-  // rather than a pretend "N left".
+  // The public DTO exposes `inStock` (boolean) only - stockQty is admin-only,
+  // so the cap below is a flat limit, not a real "N left".
   const outOfStock = product ? product.inStock === false : false;
   const MAX_QTY = 99;
 
@@ -65,8 +63,8 @@ export default function ProductDetail() {
     // The cart lives on the server against a user, so there is nowhere to put
     // this until they are signed in. Send them to sign in and come back here.
     if (!isAuthenticated) {
-      // RequireAuth hands LoginPage a pathname string, so match that shape
-      // rather than a location object it would not know what to do with.
+      // RequireAuth hands LoginPage a pathname string - match that shape, not
+      // a location object it would not understand.
       navigate("/login", { state: { from: location.pathname } });
       return;
     }
@@ -96,10 +94,9 @@ export default function ProductDetail() {
   }
 
   if (error || !product) {
-    // When there IS an error the status decides: only a 404 means the product
-    // does not exist. `|| !product` here would have made every failure read as
-    // "not found", telling someone their catalogue was missing a product when
-    // really the API was down.
+    // Only a 404 means the product is missing. Folding `|| !product` into this
+    // made a 503 read as "not found" - i.e. a down API looked like a gap in
+    // the catalogue.
     const missing = error ? error.status === 404 : true;
     return (
       <div className="gv-page gv-pdp gv-pdp--message">

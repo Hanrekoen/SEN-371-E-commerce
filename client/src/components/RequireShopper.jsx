@@ -4,14 +4,9 @@ import RequireAuth from "./RequireAuth";
 import { useAuth } from "../context/AuthContext";
 
 /**
- * Wraps the pages that only make sense for someone who can buy: the cart and
- * checkout. The API refuses an admin's cart writes and checkout outright, so
- * without this an admin typing the URL would reach a page whose every button
- * answers 403.
- *
- * This is a courtesy, not the control. The guard that matters is
- * shoppersOnly in the API - this only explains the situation before the
- * customer meets it.
+ * Guards cart/checkout: the API refuses admin cart writes outright, so without
+ * this an admin reaches a page whose every button answers 403. Courtesy only -
+ * the real control is shoppersOnly in the API.
  */
 export default function RequireShopper({ children }) {
   return (

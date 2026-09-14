@@ -181,10 +181,8 @@ export default function AdminDashboardPage() {
             <ul className="gv-admin__stock">
               {stats.lowStock.map((p) => (
                 <li key={p.id}>
-                  {/* withBase, like every other product picture in the app.
-                      The stored path is root-relative, so without it this
-                      resolves against the domain root and breaks wherever the
-                      app is not served from "/". */}
+                  {/* withBase like every other product picture: the stored path
+                      is root-relative and 404s wherever base is not "/". */}
                   {p.image
                     ? <img src={withBase(p.image)} alt="" className="gv-admin__thumb"
                            loading="lazy" onError={onImageError} />

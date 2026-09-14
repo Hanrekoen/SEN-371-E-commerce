@@ -15,12 +15,8 @@ class CategoryRepository extends baseRepository {
     return this.findOne({ name });
   }
 
-  /**
-   * Milestone 3 (4.3): categories used to return the whole collection with no
-   * pagination while products and orders both paged and returned meta. The
-   * shape now matches theirs - { items, total, page, limit } - so one client
-   * pagination helper works against every list endpoint.
-   */
+  // Milestone 3 (4.3): categories used to return the whole collection unpaged. The shape
+  // now matches products/orders - { items, total, page, limit } - so one client helper fits all.
   async list({ page = 1, limit = 20 } = {}) {
     const safePage = Math.max(1, Number(page) || 1);
     const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));

@@ -14,9 +14,9 @@ export default function Cart() {
 
   const items = cart?.items ?? [];
 
-  // Every mutation can be refused by the server - not enough stock, the
-  // product deactivated, the session expired. Without this the promise
-  // rejects into nothing and the row silently fails to change.
+  // The server can refuse any mutation (stock, deactivated product, expired
+  // session); without this the rejection is swallowed and the row silently
+  // fails to change.
   async function run(action) {
     setError(null);
     try {
@@ -28,8 +28,8 @@ export default function Cart() {
 
   function onQuantityChange(productId, raw) {
     const next = Number(raw);
-    // A cleared field parses as 0, which the API refuses. Treat it as "not
-    // finished typing" rather than firing a request that must fail.
+    // A cleared field parses as 0, which the API refuses - treat it as "still
+    // typing" rather than firing a request that must fail.
     if (!Number.isInteger(next) || next < 1) return;
     run(() => updateQuantity(productId, next));
   }

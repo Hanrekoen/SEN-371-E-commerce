@@ -21,9 +21,8 @@ const userSchema = new mongoose.Schema(
     lastName:  { type: String, required: true, trim: true, minlength: 2, maxlength: 50 },
     email:     { type: String, required: true, unique: true, lowercase: true, trim: true },
 
-    // select:false keeps the hash out of every query result unless a caller
-    // explicitly opts in with .select("+passwordHash"). This is what stops a
-    // password hash leaking through an endpoint written in a hurry.
+    // select:false keeps the hash out of every query result unless a caller opts in
+    // with .select("+passwordHash") - stops it leaking through a hastily written endpoint.
     passwordHash: { type: String, required: true, select: false },
 
     role:      { type: String, enum: ["customer", "admin"], default: "customer" },

@@ -15,14 +15,10 @@ const { reject, skipRateLimiting, WINDOW_MS } = require("../middleware/rateLimit
 
 const router = express.Router();
 
-// Stricter than the global limiter, because login is the endpoint actually
-// worth guessing at. Normal users never approach 10 in 15 minutes.
-//
-// It uses the shared reject() and skipRateLimiting() from middleware/rateLimit
-// so a login 429 comes back through the same error path as every other 429,
-// and so all three tiers are switched off by the same signals. Before that it
-// had neither: a suite that signed in more than ten times failed on a 429
-// unrelated to what it was testing.
+// Stricter than the global limiter: login is the endpoint worth guessing at, and
+// normal users never approach 10 in 15 minutes. Uses the shared reject/
+// skipRateLimiting so login 429s take the same error path and the same test
+// off-switches - without them, a suite signing in >10 times failed on a stray 429.
 const loginLimiter = rateLimit({
   windowMs: WINDOW_MS,
   max: 10,

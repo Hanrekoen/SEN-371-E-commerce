@@ -4,14 +4,9 @@ import Button from "../ui/Button";
 import { formatCents } from "../../utils/money";
 import "./SecurePayOverlay.css";
 
-// GadgetVault SecurePay - the payment step, presented the way a hosted
-// payment page presents it.
-//
-// The important part: this is presentation only. The steps below narrate a
-// request that is genuinely in flight, and the overlay never shows a step as
-// finished before the thing it describes has actually happened. The outcome
-// comes from the API, not from this component - the timers only pace what the
-// customer sees while they wait.
+// The payment step, presented like a hosted payment page. Presentation only:
+// the outcome comes from the API, the timers just pace the wait, and no step
+// is ever shown finished before the thing it describes has happened.
 
 const STEPS = [
   { key: "channel", label: "Establishing secure channel" },
@@ -58,22 +53,18 @@ export default function SecurePayOverlay({ open, amountCents, card, run, onAppro
     setReference(null);
 
     (async () => {
-      // Fire the real request straight away. The steps below pace the wait;
-      // they do not gate the call.
+      // Fire the real request straight away; the steps pace the wait, they do
+      // not gate the call.
       const pending = run();
 
-      // Attach a handler now, not at the await below. The two pacing waits
-      // mean a fast failure can settle this promise before anything is
-      // listening, and a rejection with no handler yet is reported as an
-      // unhandled rejection - noise in the console during a decline, which is
-      // a path customers genuinely hit. The real handling still happens in
-      // the try/catch; this only makes sure the rejection is never orphaned.
+      // Handler attached here, not at the await below: a fast failure settles
+      // during the pacing waits with nothing listening, which logs an
+      // unhandled rejection on every decline. try/catch still does the work.
       pending.catch(() => {});
 
-      // Steps 0 and 1 are the round trip getting under way, so they can be
-      // shown on a timer. Step 2 is the authorisation itself and must wait
-      // for the actual answer - anything else would be claiming an outcome
-      // we do not have yet.
+      // Steps 0-1 are the round trip getting under way, safe to time. Step 2
+      // is the authorisation and must wait for the real answer rather than
+      // claim an outcome we do not have yet.
       await wait(STEP_MS);
       if (!cancelled) setStep(1);
       await wait(STEP_MS);
@@ -133,8 +124,8 @@ export default function SecurePayOverlay({ open, amountCents, card, run, onAppro
           <span className="gv-pay__lock"><LockIcon /> Encrypted</span>
         </header>
 
-        {/* Not decoration. Anyone looking at this screen should be able to
-            tell at a glance that no real money is involved. */}
+        {/* Not decoration - anyone on this screen must be able to tell at a
+            glance that no real money is involved. */}
         <p className="gv-pay__sandbox">
           Sandbox — simulated payment, no real money moves and no card is stored.
         </p>

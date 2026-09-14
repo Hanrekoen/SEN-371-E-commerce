@@ -13,9 +13,7 @@ const {
   AppError,
 } = require("../errors/AppError");
 
-/**
- * Allowed order status transitions. Anything not listed is rejected with 422.
- */
+// Allowed order status transitions. Anything not listed is rejected with 422.
 const TRANSITIONS = {
   paid:      ["shipped", "cancelled"],
   shipped:   ["delivered"],
@@ -23,17 +21,8 @@ const TRANSITIONS = {
   cancelled: [],
 };
 
-/**
- * Checkout.
- *
- * Steps, in order:
- *   1. load the cart, reject if empty
- *   2. load every product, reject if any is missing or inactive
- *   3. decrement stock atomically, one item at a time
- *   4. if any decrement fails, put back everything already taken
- *   5. build the order with the factory and save it
- *   6. empty the cart
- */
+// Checkout. Stock is decremented atomically one item at a time; if any step
+// after that fails, everything already taken is put back before rethrowing.
 async function checkout(userId, {shippingAddress, card} = {}) {
   const cart = await cartRepository.findByUser(userId);
   if (!cart || cart.items.length === 0) {
@@ -103,11 +92,8 @@ async function listForUser(userId, { page, limit } = {}) {
   return { ...result, items: toOrderListDTO(result.items) };
 }
 
-/**
- * Ownership is re-checked against the authenticated user rather than trusting
- * the id in the URL. Trusting it is broken object-level authorisation, the most
- * commonly exploited API flaw there is.
- */
+// Ownership is re-checked against the authenticated user, not the id in the URL:
+// trusting the URL id is broken object-level authorisation (BOLA).
 async function getForUser(orderId, userId) {
   const order = await orderRepository.findById(orderId);
   if (!order) throw new NotFoundError("Order");

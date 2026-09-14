@@ -8,10 +8,8 @@ export function getCategory(slug) {
   return request(`/categories/${slug}`, { auth: false });
 }
 
-// --- admin ---
-// The API has had these since Milestone 3, but nothing in the app called them
-// until the admin category page was built, which is why an admin could end up
-// unable to add a product at all.
+// Admin. These existed in the API since Milestone 3 but were uncalled until
+// the admin category page - which is why an admin could not add a product.
 
 export function createCategory({ name, slug, description }) {
   return request("/categories", { method: "POST", body: { name, slug, description } });

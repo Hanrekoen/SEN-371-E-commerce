@@ -9,14 +9,12 @@ import "./Navbar.css";
 const LINKS = [
   { to: "/", label: "Home", end: true },
   { to: "/catalog", label: "Catalogue" },
-  // The Figma nav lists every frame, this one included. It points at a
-  // representative product rather than a real "product detail" section.
+  // Present because the Figma nav lists every frame; points at a
+  // representative product, not a real "product detail" section.
   { to: "/product/obsidian-x-9-headset", label: "Product Detail" },
-  // No Cart or Checkout link here. The cart icon on the right already goes to
-  // the cart and carries the item count, and checkout is reached from the cart
-  // - a second route into the same two pages is clutter, not convenience. The
-  // icon is also hidden from admins, so the rule that they do not shop still
-  // holds without a per-link exception.
+  // Cart/Checkout deliberately absent: the cart icon already links there with
+  // the item count, and it is hidden from admins - so the "admins do not shop"
+  // rule holds here without a per-link exception.
 ];
 
 const ADMIN_LINKS = [

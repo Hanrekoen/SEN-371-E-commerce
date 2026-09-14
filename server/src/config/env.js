@@ -38,11 +38,9 @@ module.exports = {
     timeoutMs: Number(process.env.PAYMENT_TIMEOUT_MS) || 5000,
     currency: process.env.PAYMENT_CURRENCY || "ZAR",
 
-    // The mock gateway runs inside this process on its own port, so `npm
-    // start` is the only command needed. The API still reaches it over HTTP -
-    // nothing about the integration is short-circuited, it just no longer
-    // needs a second terminal. Set PAYMENT_EMBEDDED=false to host it
-    // elsewhere and point PAYMENT_API_URL at it.
+    // Mock gateway runs in this process on its own port so `npm start` is the only
+    // command needed - still reached over real HTTP, nothing short-circuited. Set
+    // PAYMENT_EMBEDDED=false to host it elsewhere and point PAYMENT_API_URL at it.
     embedded: process.env.PAYMENT_EMBEDDED !== "false",
     gatewayPort: Number(process.env.PAYMENT_GATEWAY_PORT) || 5001,
   },

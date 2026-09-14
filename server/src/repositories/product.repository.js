@@ -71,13 +71,8 @@ class ProductRepository extends BaseRepository {
     return this.model.distinct("brand", { isActive: true });
   }
 
-  /**
-   * Atomic conditional decrement.
-   * The stock condition lives INSIDE the query, so MongoDB checks and updates
-   * in one operation. Reading the stock, comparing it in JavaScript and then
-   * writing would let two shoppers both buy the last unit.
-   * Returns null when there was not enough stock.
-   */
+  // Atomic: the stock condition is inside the query, so MongoDB checks and updates
+  // in one op and two shoppers cannot both buy the last unit. Null if not enough.
   async decrementStock(productId, quantity) {
     return this.model
       .findOneAndUpdate(

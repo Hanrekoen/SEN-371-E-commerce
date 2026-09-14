@@ -3,19 +3,10 @@ const app = require("./app");
 const env = require("./config/env");
 const { connect, disconnect } = require("./config/database");
 
-/**
- * Start the mock payment gateway alongside the API.
- *
- * It gets its OWN listener on its OWN port rather than being mounted into the
- * API's router, so the API still reaches it the way it would reach a real
- * provider: an HTTP request to another origin, carrying an API key, that can
- * time out or fail. Sharing a process is a convenience for whoever has to run
- * this - it is not a shortcut through the integration.
- *
- * If it cannot bind, the API still starts. Checkout then answers 503 saying
- * the provider is unreachable, which is true, and is exactly the case the
- * payment code was built to handle.
- */
+// The mock gateway gets its own listener on its own port instead of being mounted
+// into the API router, so the API reaches it like a real provider: HTTP to another
+// origin, with an API key, that can time out or fail. If it cannot bind, the API
+// still starts and checkout answers 503 - a case the payment code handles.
 function startGateway() {
   if (!env.payment.embedded) {
     console.log("[gateway] PAYMENT_EMBEDDED=false - expecting a gateway at " + env.payment.apiUrl);
@@ -24,11 +15,8 @@ function startGateway() {
 
   const gatewayApp = require("./gateway/app");
 
-  // Bound to the loopback interface rather than 0.0.0.0. Only this process
-  // ever calls it, so it has no business being reachable from outside the
-  // machine - and on a managed host the platform's port scanner finds a
-  // second externally-bound port and logs it every minute as a new open port,
-  // which is noise at best and a routing mistake at worst.
+  // Loopback, not 0.0.0.0: only this process calls it, and on a managed host a
+  // second externally-bound port gets flagged by the port scanner every minute.
   const server = gatewayApp.listen(env.payment.gatewayPort, "127.0.0.1", () =>
     console.log("[gateway] mock payment gateway on http://localhost:" + env.payment.gatewayPort)
   );

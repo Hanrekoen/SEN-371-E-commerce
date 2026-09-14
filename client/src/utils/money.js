@@ -1,9 +1,8 @@
 // The API speaks integer cents everywhere. Formatting is the only place the
 // client is allowed to divide by 100 - never for arithmetic.
 
-// Must match PAYMENT_CURRENCY on the server (config/env.js). The payment is
-// authorised in this currency, so showing prices in any other one would be a
-// lie on the one screen where it matters most.
+// Must match PAYMENT_CURRENCY on the server (config/env.js) - the payment is
+// authorised in this currency, so any other one shown here would be a lie.
 export const CURRENCY = "ZAR";
 const LOCALE = "en-ZA";
 

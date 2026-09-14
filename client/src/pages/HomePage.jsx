@@ -8,14 +8,12 @@ import * as categoriesApi from "../api/categories.api";
 import { productImage, onImageError, FALLBACK_IMAGE } from "../utils/productImage";
 import "./HomePage.css";
 
-// The Figma hero calls out this exact product. If a reseed ever drops it,
-// the effect below falls back to the top-rated product instead of leaving
-// the hero empty.
+// Named by the Figma hero; if a reseed drops it, loadHero falls back to the
+// top-rated product rather than leaving the hero empty.
 const HERO_SLUG = "obsidian-x-9-headset";
 
-// One icon per seeded category slug - the category DTO has no icon field,
-// so this is a small, frontend-only lookup. Anything not in this list still
-// renders a tile, just without a picked icon.
+// Frontend-only lookup because the category DTO has no icon field. An
+// unlisted slug still renders a tile, just without an icon.
 const CATEGORY_ICONS = {
   "audio-architecture": MusicIcon,
   "modular-keyboards": KeyboardIcon,
@@ -54,9 +52,8 @@ export default function HomePage() {
         setHero(heroProduct);
         setTrending(trendingResult.data || []);
 
-        // Item counts per category aren't in the category DTO, so they're
-        // fetched with one lightweight request each (limit: 1, only meta.total
-        // is read) - fine for the handful of categories this catalogue has.
+        // Counts aren't in the category DTO, so one limit:1 request each just
+        // for meta.total - acceptable at this catalogue's handful of categories.
         const withCounts = await Promise.all(
           (categoryList || []).map(async (category) => {
             try {
@@ -78,14 +75,13 @@ export default function HomePage() {
   function handleSubscribe(e) {
     e.preventDefault();
     if (!email.trim()) return;
-    // No newsletter backend exists yet - this just acknowledges the signup
-    // locally rather than pretending to call an endpoint that isn't there.
+    // No newsletter backend yet - acknowledge locally rather than call an
+    // endpoint that isn't there.
     setSubscribed(true);
   }
 
   return (
     <>
-      {/* Hero */}
       <section className="gv-hero">
         <div className="container gv-hero__inner">
           <div className="row align-items-center gy-5">
@@ -133,7 +129,6 @@ export default function HomePage() {
       </section>
 
       <div className="container py-5">
-        {/* Category tiles */}
         <section className="mb-5">
           <h2 className="mb-4">Browse Material Vaults</h2>
           <div className="row g-3">
@@ -154,7 +149,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Trending releases */}
         <section>
           <div className="d-flex align-items-center justify-content-between mb-4">
             <h2 className="mb-0">Trending Releases</h2>
@@ -172,7 +166,6 @@ export default function HomePage() {
       </div>
 
 
-      {/* Membership banner */}
       <section className="gv-membership">
         <div className="container d-flex flex-wrap align-items-center justify-content-between gap-4">
           <div>
@@ -189,7 +182,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Newsletter */}
       <section className="gv-newsletter">
         <div className="container text-center">
           <h2 className="mb-2">Keep your gear inventory updated.</h2>

@@ -9,16 +9,10 @@ import { summaryMessage } from "../utils/apiErrors";
 import "./OrderConfirmationPage.css";
 
 /**
- * Route: /orders/:orderId/confirmation
- *
- * The order is fetched by id rather than read out of navigation state, so a
- * refresh, a bookmark or a link pasted to someone else all behave the same
- * way. Checkout still passes the order along in state, which is used only to
- * paint immediately while the fetch confirms it - the fetched copy always
- * wins, since it is the one the server stands behind.
- *
- * No ownership check here: order.service.getForUser already refuses an order
- * that belongs to someone else, and a 403 from the API is the answer.
+ * Route: /orders/:orderId/confirmation. Fetched by id, not read from nav state,
+ * so refresh/bookmark/shared-link all behave alike - checkout's handed-over copy
+ * only paints early and the fetched one always wins. No ownership check needed:
+ * order.service.getForUser already 403s an order belonging to someone else.
  */
 export default function OrderConfirmationPage() {
   const { orderId } = useParams();
@@ -49,9 +43,8 @@ export default function OrderConfirmationPage() {
     );
   }
 
-  // Only an error if we have nothing to show. If the hand-over copy is on
-  // screen, a failed refetch is not worth replacing a valid receipt with an
-  // error - the customer's order did go through.
+  // Only error when there is nothing to show: the order did go through, so a
+  // failed refetch must not replace a valid receipt with an error.
   if (error && !order) {
     return (
       <div className="gv-page gv-confirm gv-confirm--message">

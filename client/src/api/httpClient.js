@@ -2,25 +2,19 @@ import { API_BASE_URL } from "./config";
 import { getAccessToken, setAccessToken, clearAccessToken } from "./tokenStore";
 import { ApiError } from "./ApiError";
 
-/**
- * The Facade named in ARCHITECTURE.md ("client/src/api ... One interface to
- * the backend for the whole client"). Every resource module (auth.api.js,
- * cart.api.js, and whatever Milestone 4 adds for products/orders/categories)
- * calls request() rather than touching fetch directly, so the base URL,
- * auth header, refresh-on-401 and error shape only exist in one place.
- */
+// The Facade from ARCHITECTURE.md: every resource module calls request()
+// instead of fetch, so base URL, auth header, refresh-on-401 and error shape
+// live in exactly one place.
 
-// Endpoints that must never trigger a refresh-and-retry: refresh itself
-// (infinite loop) and login/register, where a 401 is a real "wrong
-// credentials" answer, not an expired token.
+// Never refresh-and-retry these: refresh itself would loop, and on
+// login/register a 401 means wrong credentials, not an expired token.
 const NO_REFRESH_PATHS = ["/auth/refresh", "/auth/login", "/auth/register"];
 
 let refreshInFlight = null;
 
 /**
- * Calls POST /auth/refresh exactly once even if several requests hit a 401
- * at the same moment - they all await the same promise instead of each
- * firing their own refresh call and racing to rotate the cookie.
+ * Shared in-flight promise so concurrent 401s trigger POST /auth/refresh once:
+ * parallel refreshes would race to rotate the cookie.
  */
 function refreshAccessToken() {
   if (!refreshInFlight) {
@@ -71,8 +65,8 @@ export async function request(path, { method = "GET", body, auth = true, withMet
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch (networkErr) {
-    // fetch throws on a dropped connection, CORS failure, DNS error, etc. -
-    // there is no response to parse, so this is its own ApiError shape.
+    // fetch throws (dropped connection, CORS, DNS) with no response to parse,
+    // so this gets its own status-0 ApiError shape.
     throw new ApiError("Could not reach the server", {
       status: 0,
       code: "NETWORK_ERROR",

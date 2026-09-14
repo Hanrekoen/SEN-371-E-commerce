@@ -1,10 +1,7 @@
 "use strict";
 
-/**
- * Factory pattern. The ONLY place an order document is constructed.
- * Centralising it means price snapshots, totals and order numbering cannot be
- * done two different ways in two different places.
- */
+// Factory: the ONLY place an order document is constructed, so price snapshots,
+// totals and order numbering cannot be done two different ways in two places.
 
 // The prototype shows free shipping and an 8% tax line.
 // For South African VAT, change TAX_RATE to 0.15.

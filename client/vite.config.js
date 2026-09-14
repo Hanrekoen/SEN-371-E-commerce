@@ -4,42 +4,37 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
 
-  // GitHub Pages serves a project site from /<repo-name>/, not from /. Every
-  // asset URL is built against this, so getting it wrong gives a blank page
-  // and a console full of 404s. The deploy workflow sets VITE_BASE from the
-  // repository name automatically; locally it stays "/" and nothing changes.
+  // Every asset URL is built against this; wrong value = blank page and 404s.
+  // The deploy workflow sets VITE_BASE to the repo name for GitHub Pages
+  // (which serves from /<repo-name>/); locally it stays "/".
   base: process.env.VITE_BASE || "/",
 
   server: {
     port: 5173,
   },
 
-  // --- Milestone 5: automated testing ---
   test: {
-    // Components are rendered into a DOM and driven the way a person would
-    // drive them, so the tests need a DOM to render into.
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test/setup.js"],
-    // Unit and component tests only. The Playwright journeys under e2e/ drive
-    // a real browser and are run by `npm run test:e2e`.
+    // Unit/component tests only - the Playwright journeys under e2e/ drive a
+    // real browser and run via `npm run test:e2e`.
     include: ["src/**/*.test.{js,jsx}"],
 
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary", "html", "lcov"],
       reportsDirectory: "./coverage",
-      // Only our own source counts. The entry point and the test helpers are
-      // not code under test, and leaving them in moves the figure without
-      // telling anyone anything.
+      // Entry point and test helpers are not code under test; counting them
+      // moves the figure without telling anyone anything.
       include: ["src/**/*.{js,jsx}"],
       exclude: [
         "src/main.jsx",
         "src/test/**",
         "src/**/*.test.{js,jsx}",
       ],
-      // A floor, not a target: the suite fails below this so coverage cannot
-      // quietly rot. Set just under what the suite actually achieves.
+      // A floor, not a target, set just under what the suite achieves: the
+      // run fails below this so coverage cannot quietly rot.
       thresholds: {
         statements: 55,
         branches: 78,

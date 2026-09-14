@@ -1,24 +1,12 @@
-// One place that decides which picture to show for a product.
-//
-// This exists because the same logic had drifted across pages: Home mapped
-// slugs to local files and fell back, the catalogue card read images[0] raw,
-// and the detail page read images[0] raw as well - so a product whose images
-// field was anything other than a clean array of URLs showed a picture on one
-// page and nothing on another.
-//
-// Every surface that shows a product picture must go through here.
+// Single source of truth for product pictures. This logic had drifted across
+// Home/catalogue/detail, so a product whose `images` field was not a clean
+// array showed a picture on one page and nothing on another. Route all
+// product-image rendering through here.
 
 /**
- * Root-relative paths resolve against the domain root, which is wrong
- * wherever the app is not served from it.
- *
- * Locally the base is "/" and this changes nothing. On GitHub Pages the app
- * is served from "/<repo-name>/", so a stored path of "/product-pictures/x.jpg"
- * gets requested from the domain root - where nothing exists - and every
- * product renders its alt text instead of a picture.
- *
- * Absolute URLs pass through untouched: a product whose image is hosted
- * elsewhere is already fully qualified and must not be rewritten.
+ * Stored image paths are root-relative, but Pages serves the app from
+ * "/<repo>/" - without this every product image 404s. Absolute URLs pass
+ * through untouched, since an externally hosted image must not be rewritten.
  */
 export function withBase(url) {
   if (typeof url !== "string" || !url.startsWith("/")) return url;
@@ -45,11 +33,9 @@ const BY_SLUG = {
 };
 
 /**
- * The `images` field is supposed to be an array of URLs, but a product typed
- * into the admin form can arrive as a single string, or as one comma-separated
- * string. Indexing a string with [0] yields one character - which is exactly
- * how a page ends up requesting "/h" and rendering nothing - so the shape is
- * normalised here rather than trusted.
+ * `images` should be an array, but the admin form can produce a single or
+ * comma-separated string - and indexing a string with [0] yields one character,
+ * so a page requests "/h" and renders nothing. Normalise rather than trust.
  */
 export function productImages(product) {
   const raw = product?.images;
@@ -74,9 +60,8 @@ export function productImage(product, fallback = FALLBACK) {
 }
 
 /**
- * For <img onError>. A path can be right in the database and still 404 on
- * disk, so the element swaps to the fallback once and then stops, rather than
- * looping if the fallback is missing too.
+ * For <img onError>. A DB path can still 404 on disk; swaps to the fallback
+ * once only, so a missing fallback cannot loop.
  */
 export function onImageError(event, fallback = FALLBACK) {
   const img = event.currentTarget;

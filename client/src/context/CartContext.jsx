@@ -2,9 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import * as cartApi from "../api/cart.api";
 import { useAuth } from "./AuthContext";
 
-// Exported so tests can supply a context directly instead of mocking the
-// network and waiting for a provider to settle. Application code should
-// still use the hook below.
+// Exported so tests can supply a context directly rather than mock the network
+// and wait for a provider to settle. Application code uses the hook below.
 export const CartContext = createContext(null);
 
 const EMPTY = { items: [], itemCount: 0, subtotalCents: 0, shippingCents: 0, taxCents: 0, totalCents: 0 };

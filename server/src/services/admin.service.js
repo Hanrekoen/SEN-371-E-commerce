@@ -5,9 +5,8 @@ const userRepository = require("../repositories/user.repository");
 const { TRANSITIONS } = require("./order.service");
 const { toProductDTO } = require("../dtos/product.dto");
 
-// Dashboard figures. Every number here is derived from real data - where a
-// panel in the design implies something the API cannot honestly measure, the
-// closest true metric is returned rather than an invented one.
+// Dashboard figures, all derived from real data: where the design implies a metric
+// the API cannot honestly measure, the closest true one is returned, not an invented one.
 
 const LOW_STOCK_THRESHOLD = 5;
 // Money actually taken: a pending order is not authorised yet, and a
@@ -45,9 +44,8 @@ async function stats({ now = new Date() } = {}) {
   const totalOrders = Object.values(byStatus).reduce((sum, n) => sum + n, 0);
   const paidOrders = EARNING_STATUSES.reduce((sum, s) => sum + (byStatus[s] || 0), 0);
 
-  // Orders per customer, as a percentage. Named "conversion" in the design;
-  // a true visit-to-order rate needs analytics the API does not collect, and
-  // this is the closest thing that is actually true.
+  // Orders per customer as a percentage. Called "conversion" in the design, but a
+  // true visit-to-order rate needs analytics the API does not collect.
   const conversionRate = totalCustomers > 0
     ? Number(((paidOrders / totalCustomers) * 100).toFixed(1))
     : 0;

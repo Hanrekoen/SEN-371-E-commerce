@@ -1,8 +1,7 @@
 "use strict";
 
-// Test cards that force a specific outcome, the way real gateways publish
-// them - it is what makes the failure paths demonstrable rather than
-// theoretical. Anything not listed here is approved if it passes Luhn.
+// Test cards that force a specific outcome, as real gateways publish, so the failure
+// paths are demonstrable. Anything not listed is approved if it passes Luhn.
 const OUTCOMES = {
   "4000000000000002": { outcome: "declined", code: "card_declined",     message: "Card declined by issuer" },
   "4000000000000069": { outcome: "declined", code: "expired_card",      message: "Card has expired" },

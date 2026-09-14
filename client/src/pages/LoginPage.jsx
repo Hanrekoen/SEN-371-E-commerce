@@ -161,9 +161,8 @@ export default function LoginPage() {
 
             {!isRegister && (
               <label className="gv-auth__remember">
-                {/* Session length is set by the refresh token's server-side TTL,
-                    so this cannot be honoured from the client. Shown disabled
-                    rather than as a control that silently does nothing. */}
+                {/* Session length is the refresh token's server-side TTL, so the
+                    client cannot honour this - disabled, not silently inert. */}
                 <input type="checkbox" disabled title="Session length is fixed at 7 days by the server" />
                 <span>Remember this device for 30 days</span>
               </label>

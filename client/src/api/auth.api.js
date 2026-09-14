@@ -1,9 +1,8 @@
 import { request } from "./httpClient";
 import { setAccessToken, clearAccessToken } from "./tokenStore";
 
-// Who am I? The access token lives in memory only, so after a page reload the
-// app has no idea who is signed in until it asks. Called once on boot, after
-// the silent refresh.
+// The access token is in-memory only, so after a reload the app must ask who
+// is signed in. Called once on boot, after the silent refresh.
 export function me() {
   return request("/auth/me");
 }

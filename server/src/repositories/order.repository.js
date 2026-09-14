@@ -20,11 +20,8 @@ class OrderRepository extends BaseRepository {
     return this.find(filter, { sort: { createdAt: -1 }, page, limit });
   }
 
-  /**
-   * Orders that represent money actually taken. A pending order has been
-   * built but not authorised, and a cancelled one has been refunded in
-   * stock, so neither counts as revenue.
-   */
+  // Money actually taken: a pending order is not authorised yet and a
+  // cancelled one had its stock returned, so neither counts as revenue.
   static get EARNING_STATUSES() {
     return ["paid", "shipped", "delivered"];
   }

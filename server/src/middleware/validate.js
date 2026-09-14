@@ -4,9 +4,8 @@ const { validationResult, matchedData } = require("express-validator");
 const { ValidationError } = require("../errors/AppError");
 
 // PERSON 2 OWNS THIS FILE.
-// Shared express-validator adapter, so a failed check becomes an AppError
-// and reaches the client in the same envelope as every other failure.
-//   router.post("/", rules, validate, asyncHandler(handler));
+// Shared express-validator adapter: a failed check becomes an AppError, so it
+// reaches the client in the same envelope as every other failure.
 
 // No `value` in the details, deliberately: it would echo a rejected password
 // or card number back to the client and into any log of the response.

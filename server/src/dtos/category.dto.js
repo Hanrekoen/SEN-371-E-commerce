@@ -1,5 +1,4 @@
-// takes a category document from the database and returns only what the client should see
-// removes _id, __v and turns _id into id like everyone else is doing
+// Drops _id/__v and exposes id, matching the shape the other DTOs return.
 
 function toCategoryDto(category) {
   return {
@@ -10,7 +9,6 @@ function toCategoryDto(category) {
   };
 }
 
-// same thing but for a list of categories
 function toCategoryListDto(categories) {
   return categories.map(toCategoryDto);
 }

@@ -1,11 +1,8 @@
 "use strict";
 
-/**
- * Cart response shape (3.2). Guarantees productId is a plain string, and
- * renames `lines` -> `items` to match order.factory - a client rendering both
- * should not need two field names for the same concept. See
- * docs/minutes/contract-freeze-notes.md.
- */
+// Cart response shape (3.2): productId is always a plain string, and `lines` is renamed
+// `items` to match order.factory so a client needs one field name, not two. See
+// docs/minutes/contract-freeze-notes.md.
 
 function toCartItemDto(line) {
   return {

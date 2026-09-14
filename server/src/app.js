@@ -13,9 +13,8 @@ const { apiLimiter, writeLimiter } = require("./middleware/rateLimit");
 const { mongoSanitize, preventParamPollution } = require("./middleware/sanitize");
 
 // Builds the app; server.js listens, so tests can import this without a port.
-//
-// PERSON 2 OWNS THIS FILE this milestone. The order below is deliberate:
-// each layer rejects the request or narrows it, cheapest checks first.
+// PERSON 2 OWNS THIS FILE this milestone. Middleware order is deliberate: each
+// layer rejects or narrows the request, cheapest checks first.
 
 const app = express();
 

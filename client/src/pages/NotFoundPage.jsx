@@ -4,12 +4,8 @@ import { SearchIcon } from "../components/ui/Icons";
 import "./NotFoundPage.css";
 
 /**
- * The catch-all route. Anything that does not match a real path lands here:
- * a typo, a stale bookmark, a dead link from somewhere else.
- *
- * It says which path failed rather than a bare apology, because knowing the
- * URL is usually what tells someone whether they mistyped it or whether the
- * link they followed is wrong.
+ * Catch-all route. Shows the failed path rather than a bare apology - seeing
+ * the URL is what tells someone whether they mistyped it or followed a bad link.
  */
 export default function NotFoundPage() {
   const { pathname } = useLocation();

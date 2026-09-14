@@ -2,10 +2,9 @@ import { useMemo, useRef, useState } from "react";
 import { formatCentsCompact } from "../../utils/money";
 import "./TrendChart.css";
 
-// One series, so no legend - the card title names it. Grid and axes are
-// deliberately recessive; the line is the only thing drawn at full strength.
-// A crosshair and tooltip follow the pointer, and the same numbers are
-// available as a table for screen readers and for anyone who cannot hover.
+// One series, so no legend - the card title names it. The hover crosshair and
+// tooltip are duplicated as a table, for screen readers and anyone who cannot
+// hover.
 export default function TrendChart({ points = [], height = 260 }) {
   const [hover, setHover] = useState(null);
   const svgRef = useRef(null);

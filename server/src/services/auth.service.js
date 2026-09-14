@@ -5,17 +5,11 @@ const { hashPassword, comparePassword } = require("../utils/password");
 const { signAccessToken, signRefreshToken, verifyRefreshToken } = require("../utils/jwt");
 const { ConflictError, UnauthorizedError } = require("../errors/AppError");
 
-/**
- * Business rules for authentication.
- * No req, no res, no Mongoose - only the user repository, password/jwt
- * helpers and error classes, so this is unit-testable against a fake
- * repository (see ARCHITECTURE.md).
- */
+// Auth business rules. No req, res or Mongoose here - only the repository and
+// helpers - so this is unit-testable against a fake repository (ARCHITECTURE.md).
 
-// Strips fields a client should never see. passwordHash is already
-// excluded by the schema's select:false, but a caller that used
-// findByEmailWithPassword (login) still has it on the document, so this
-// is the one place every response is sanitised before it leaves the layer.
+// The one place every response is sanitised: select:false already hides
+// passwordHash, but a login via findByEmailWithPassword still has it loaded.
 function toPublicUser(user) {
   return {
     id: user._id,
@@ -29,9 +23,8 @@ function toPublicUser(user) {
 
 function issueTokens(user) {
   const accessToken = signAccessToken({ id: user._id.toString(), role: user.role });
-  // jti makes every refresh token unique even if issued in the same
-  // second as the last one - without it, rotating right after login
-  // (same id + tokenVersion + iat) would sign an identical token.
+  // jti keeps each refresh token unique: without it, rotating within the same
+  // second as login (same id + tokenVersion + iat) signs an identical token.
   const refreshToken = signRefreshToken({
     id: user._id.toString(),
     tokenVersion: user.tokenVersion,
@@ -64,11 +57,8 @@ async function login(email, password) {
   return { user: toPublicUser(user), ...issueTokens(user) };
 }
 
-/**
- * Exchanges a valid refresh token for a new access token, and rotates the
- * refresh token itself (issuing a new one each time limits how long a
- * stolen refresh token stays useful).
- */
+// Rotates the refresh token as well as issuing an access token - a new one each
+// time limits how long a stolen refresh token stays useful.
 async function refresh(refreshToken) {
   let payload;
   try {
@@ -94,12 +84,9 @@ async function logout(userId) {
   await userRepository.incrementTokenVersion(userId);
 }
 
-/**
- * The signed-in user, re-read from the database rather than decoded from the
- * token. A token can outlive a deactivation or a role change; the record
- * cannot. The client calls this on every page load to restore a session, so
- * an account disabled mid-session stops working on the next reload.
- */
+// Re-read from the database, not decoded from the token: a token can outlive a
+// deactivation or role change. The client calls this on every page load, so an
+// account disabled mid-session stops working on the next reload.
 async function getPublicUser(userId) {
   const user = await userRepository.findById(userId);
   if (!user || !user.isActive) {

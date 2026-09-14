@@ -18,7 +18,6 @@ const BLANK = {
   cardName: "", cardNumber: "", expiry: "", cvc: "",
 };
 
-// "4242 4242 4242 4242" -> "4242424242424242"
 const digitsOnly = (s) => String(s).replace(/\D/g, "");
 
 // Groups of four as the user types, so a 16-digit string stays readable.
@@ -54,9 +53,8 @@ export default function CheckoutPage() {
   const items = cart?.items || [];
   const empty = items.length === 0;
 
-  // Submitting hands over to the SecurePay overlay, which is what actually
-  // runs the request. The overlay narrates the wait; this still owns what to
-  // do with the two possible outcomes.
+  // Submitting hands over to the SecurePay overlay, which runs the request;
+  // this page still owns what happens with either outcome.
   function onSubmit(e) {
     e.preventDefault();
     setSummary(null);

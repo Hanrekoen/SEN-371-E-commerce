@@ -1,6 +1,5 @@
-// The API answers a failed validation with error.details = [{ field, message }].
-// This turns that into the { fieldName: message } shape the forms render, so a
-// 400 lands next to the input that caused it instead of in a banner.
+// The API returns error.details = [{ field, message }]; forms render
+// { fieldName: message }, so a 400 lands on the input that caused it.
 export function fieldErrors(err) {
   const details = err?.details;
   if (!Array.isArray(details)) return {};

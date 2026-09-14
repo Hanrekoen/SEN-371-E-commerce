@@ -35,9 +35,8 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Local, uncommitted price inputs - only pushed into the URL (and the
-  // actual request) on blur/Enter, so a request doesn't fire on every
-  // keystroke while someone is still typing "2000".
+  // Uncommitted price inputs, pushed to the URL (and the request) only on
+  // blur/Enter - otherwise typing "2000" fires a request per keystroke.
   const [priceDraft, setPriceDraft] = useState({ min: minPrice, max: maxPrice });
   useEffect(() => { setPriceDraft({ min: minPrice, max: maxPrice }); }, [minPrice, maxPrice]);
 
@@ -115,13 +114,11 @@ export default function CatalogPage() {
 
   return (
     <div className="container py-5">
-      {/* Present but visually hidden - the Figma frame has no on-page
-          heading (the section title lives in the navbar), but every page
-          still needs exactly one real h1 for screen reader users. */}
+      {/* Visually hidden: the Figma frame has no on-page heading, but every
+          page still needs exactly one real h1 for screen reader users. */}
       <h1 className="gv-sr">{activeCategory ? activeCategory.name : "Catalogue"}</h1>
 
       <div className="row g-4">
-        {/* Filters */}
         <aside className="col-12 col-lg-3">
           <div className="gv-filters">
             <div className="d-flex align-items-center justify-content-between mb-4">
@@ -200,7 +197,6 @@ export default function CatalogPage() {
           </div>
         </aside>
 
-        {/* Grid */}
         <main className="col-12 col-lg-9">
           <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
             <p className="mb-0">

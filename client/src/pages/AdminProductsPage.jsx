@@ -28,9 +28,8 @@ function centsToRands(cents) {
   return Number.isInteger(cents) ? (cents / 100).toFixed(2) : "";
 }
 
-// "Obsidian X-9 Headset" -> "obsidian-x-9-headset", matching the slug rule the
-// API enforces, so the field is filled in correctly by default rather than
-// rejected after the fact.
+// Matches the slug rule the API enforces, so the default is accepted rather
+// than rejected after the fact: "Obsidian X-9 Headset" -> "obsidian-x-9-headset".
 function slugify(name) {
   return String(name)
     .toLowerCase()
@@ -366,9 +365,8 @@ export default function AdminProductsPage() {
                           <Button
                             size="sm" variant="ghost" loading={busyId === p.id}
                             onClick={() => {
-                              // Deactivating hides a product from the shop, so
-                              // it is confirmed - but it is reversible, and the
-                              // wording says so.
+                              // Confirmed because it hides the product from the
+                              // shop; the wording says it is reversible.
                               const yes = window.confirm(
                                 `Hide ${p.name} from the shop? It stays here and can be reactivated at any time.`
                               );
@@ -393,9 +391,8 @@ export default function AdminProductsPage() {
 }
 
 /**
- * The API reports errors against its own field names. Two differ from the
- * form's, so they are translated rather than silently dropped - an error with
- * no input to attach to is an error nobody sees.
+ * The API names two error fields differently from the form; without this
+ * translation they attach to no input, so nobody ever sees them.
  */
 function mapApiFields(perField) {
   const mapped = { ...perField };

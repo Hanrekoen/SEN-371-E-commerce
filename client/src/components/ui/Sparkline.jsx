@@ -1,10 +1,9 @@
 import { useId } from "react";
 import "./Sparkline.css";
 
-// A 7-point trend inside a stat tile. No axes and no tooltip by design: the
-// headline number carries the value, this only carries the shape, and the
-// signed delta beside it states the direction in words rather than by colour
-// alone.
+// A 7-point trend for a stat tile. No axes or tooltip by design - this shows
+// shape only, and the signed delta beside it gives direction in words, not
+// by colour alone.
 export default function Sparkline({ values = [], tone = "primary", label }) {
   const gradientId = useId();
   const w = 100;

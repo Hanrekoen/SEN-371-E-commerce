@@ -2,18 +2,12 @@
 const express = require("express");
 const { MAX_AMOUNT_CENTS, luhnValid, lookup } = require("./cards");
 
-// GadgetVault mock payment gateway.
-//
-// This stands in for a third-party provider. It lives in the repository for
-// convenience - one npm install, one npm start - but it is NOT part of the
-// API: it has its own port, its own API key, and its own response shape,
-// and nothing in src/ outside this folder may require it. The API reaches it
-// the same way it would reach Stripe, over HTTP, so the integration work
-// (network call, API key, status codes, latency, failures) stays real.
-// Only the money is imaginary.
-//
-// server.js starts it on PAYMENT_GATEWAY_PORT unless PAYMENT_EMBEDDED=false,
-// in which case run it yourself and point PAYMENT_API_URL wherever it lives.
+// GadgetVault mock payment gateway. Stands in for a third-party provider: it ships in
+// this repo for convenience but is NOT part of the API - own port, API key and response
+// shape, and nothing in src/ outside this folder may require it. The API reaches it over
+// HTTP as it would Stripe, so the integration work stays real; only the money is imaginary.
+// server.js starts it on PAYMENT_GATEWAY_PORT unless PAYMENT_EMBEDDED=false, in which
+// case run it yourself and point PAYMENT_API_URL at it.
 
 const API_KEY = process.env.GATEWAY_API_KEY || "dev-gateway-key";
 const TIMEOUT_CARD_DELAY_MS = Number(process.env.GATEWAY_SLOW_MS) || 15000;
@@ -53,7 +47,6 @@ app.use((req, res, next) => {
 app.post("/authorize", async (req, res) => {
   const { amountCents, currency, orderNumber, card } = req.body || {};
 
-  // --- request validation -------------------------------------------------
   const problems = [];
   if (!Number.isInteger(amountCents) || amountCents <= 0) {
     problems.push("amountCents must be a positive integer");
@@ -86,7 +79,6 @@ app.post("/authorize", async (req, res) => {
     });
   }
 
-  // --- outcome ------------------------------------------------------------
   const rule = lookup(card.number);
 
   if (rule && rule.outcome === "timeout") {

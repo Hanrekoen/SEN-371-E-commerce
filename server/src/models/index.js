@@ -1,14 +1,7 @@
 "use strict";
 
-/**
- * Registers every Mongoose model in one place.
- *
- * Mongoose only knows about a model once its file has been required. A
- * repository that calls .populate("categoryId") therefore fails with
- * MissingSchemaError unless the referenced model has already been loaded
- * somewhere. Requiring this module during startup registers all five, so
- * population works no matter which repository happens to load first.
- */
+// Mongoose only knows a model once its file is required, so .populate("categoryId")
+// throws MissingSchemaError otherwise. Requiring this at startup registers all five.
 
 const User = require("./user.model");
 const Category = require("./category.model");

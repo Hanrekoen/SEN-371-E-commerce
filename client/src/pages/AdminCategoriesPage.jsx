@@ -8,11 +8,9 @@ import { summaryMessage } from "../utils/apiErrors";
 import "./AdminCategoriesPage.css";
 
 /**
- * Built test-first (see AdminCategoriesPage.test.jsx and docs/TDD_LOG.md).
- *
- * Every product needs a category, and the product form's picker is required.
- * Without this page, an admin starting from an empty database could never add
- * a product at all - the API could do it, but nothing in the app asked.
+ * Built test-first (see docs/TDD_LOG.md). Exists because the product form's
+ * category picker is required: without this page an admin starting from an
+ * empty database could never add a product through the app at all.
  */
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState([]);
@@ -50,8 +48,7 @@ export default function AdminCategoriesPage() {
     setNotice(null);
     try {
       await categoriesApi.createCategory({ name: trimmed });
-      // Cleared only on success. Making someone retype a name after a failure
-      // is a small insult on top of the failure.
+      // Cleared only on success - don't make someone retype after a failure.
       setName("");
       setNotice(`${trimmed} was added.`);
       await load();

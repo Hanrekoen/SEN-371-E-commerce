@@ -1,10 +1,6 @@
-// The access token lives in memory only - never localStorage or a
-// non-httpOnly cookie. That's the whole point of the split the backend
-// already made (see docs/PERSON2_SUMMARY.md): the refresh token is an
-// httpOnly cookie an XSS bug can't read, and the access token is short-lived
-// enough that keeping it in memory (lost on tab close/refresh, recovered via
-// one silent /auth/refresh call) is an acceptable trade for not persisting
-// it anywhere JS can be tricked into reading.
+// In memory only - never localStorage or a non-httpOnly cookie, so XSS cannot
+// read it. Deliberate trade: the token is lost on tab close/refresh and
+// recovered by one silent /auth/refresh (the cookie is httpOnly).
 
 let accessToken = null;
 

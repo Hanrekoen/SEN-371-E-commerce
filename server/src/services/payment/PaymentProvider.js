@@ -1,11 +1,8 @@
 "use strict";
 
 // PERSON 2 OWNS THIS FOLDER.
-//
-// Strategy pattern - the contract. One interface, two implementations, and a
-// caller that never learns which one it got, so swapping them is a config
-// change rather than a code change. This is the Strategy the System Plan
-// claims in section 3.
+// Strategy contract (System Plan section 3): two implementations, and a caller that
+// never learns which it got, so swapping them is a config change, not a code change.
 
 /**
  * @typedef  {Object} AuthorizationRequest
@@ -23,9 +20,8 @@
 
 class PaymentProvider {
   /**
-   * Resolves for approved AND declined - a decline is a normal answer from a
-   * working provider. Rejects only when no answer was obtained at all, which
-   * checkout turns into a 503 after rolling stock back.
+   * Resolves for approved AND declined - a decline is a normal answer. Rejects only
+   * when no answer was obtained, which checkout turns into a 503 after rolling stock back.
    *
    * @param   {AuthorizationRequest} request
    * @returns {Promise<AuthorizationResult>}
