@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Alert from "../components/ui/Alert";
 import Button from "../components/ui/Button";
 import Field from "../components/ui/Field";
@@ -51,6 +51,8 @@ export default function AdminProductsPage() {
   const [formError, setFormError] = useState(null);
   const [saving, setSaving] = useState(false);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const load = useCallback(async () => {
     try {
       const result = await adminApi.listProducts({ limit: 100 });
@@ -78,12 +80,21 @@ export default function AdminProductsPage() {
     return (product) => product.category?.name || map.get(product.category?.id) || "—";
   }, [categories]);
 
-  function openNew() {
+  const openNew = useCallback(() => {
     setEditing("new");
     setValues({ ...BLANK, categoryId: categories[0]?.id || "" });
     setFormErrors({});
     setFormError(null);
-  }
+  }, [categories]);
+
+  // The dashboard's "Create new drop" button links here with ?new=1, so it
+  // arrives with the form already open. The flag is consumed straight away:
+  // a refresh or a back-navigation should not reopen a form they closed.
+  useEffect(() => {
+    if (!searchParams.has("new")) return;
+    openNew();
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams, openNew]);
 
   function openEdit(product) {
     setEditing(product.id);

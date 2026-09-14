@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Alert from "../components/ui/Alert";
 import Sparkline from "../components/ui/Sparkline";
@@ -122,7 +123,9 @@ export default function AdminDashboardPage() {
         </div>
         <div className="gv-admin__head-actions">
           <Button variant="ghost" onClick={load}>Refresh</Button>
-          <Button>Create new drop</Button>
+          {/* ?new=1 is read by the catalogue page, which opens the add form on
+              arrival instead of making them find the button again. */}
+          <Button as={Link} to="/admin/products?new=1">Create new drop</Button>
         </div>
       </header>
 
