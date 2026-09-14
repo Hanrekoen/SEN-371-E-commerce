@@ -8,7 +8,25 @@
 //
 // Every surface that shows a product picture must go through here.
 
-const FALLBACK = "/product-pictures/Obsidian%20x9%20black.jpg";
+/**
+ * Root-relative paths resolve against the domain root, which is wrong
+ * wherever the app is not served from it.
+ *
+ * Locally the base is "/" and this changes nothing. On GitHub Pages the app
+ * is served from "/<repo-name>/", so a stored path of "/product-pictures/x.jpg"
+ * gets requested from the domain root - where nothing exists - and every
+ * product renders its alt text instead of a picture.
+ *
+ * Absolute URLs pass through untouched: a product whose image is hosted
+ * elsewhere is already fully qualified and must not be rewritten.
+ */
+export function withBase(url) {
+  if (typeof url !== "string" || !url.startsWith("/")) return url;
+  const base = import.meta.env.BASE_URL || "/";
+  return base.replace(/\/$/, "") + url;
+}
+
+const FALLBACK = withBase("/product-pictures/Obsidian%20x9%20black.jpg");
 
 // The seed stores real paths, but a product added by hand through the admin
 // form can end up with a placeholder URL instead. Those hosts never resolve
@@ -45,12 +63,13 @@ export function productImages(product) {
 
   return list
     .map((url) => (typeof url === "string" ? url.trim() : ""))
-    .filter((url) => url.length > 1 && !PLACEHOLDER_HOSTS.some((host) => url.includes(host)));
+    .filter((url) => url.length > 1 && !PLACEHOLDER_HOSTS.some((host) => url.includes(host)))
+    .map(withBase);
 }
 
 /** The picture to show for a product, with a guaranteed usable result. */
 export function productImage(product, fallback = FALLBACK) {
-  if (product?.slug && BY_SLUG[product.slug]) return BY_SLUG[product.slug];
+  if (product?.slug && BY_SLUG[product.slug]) return withBase(BY_SLUG[product.slug]);
   return productImages(product)[0] || fallback;
 }
 
@@ -63,7 +82,7 @@ export function onImageError(event, fallback = FALLBACK) {
   const img = event.currentTarget;
   if (img.dataset.fallbackApplied) return;
   img.dataset.fallbackApplied = "true";
-  img.src = fallback;
+  img.src = withBase(fallback);
 }
 
 export { FALLBACK as FALLBACK_IMAGE };
